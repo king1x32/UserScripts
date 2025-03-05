@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gemini AI Translator (Inline & Popup)
 // @namespace    Gemini AI Translator (Inline & Popup)
-// @version      4.0
+// @version      4.1
 // @author       King1x32
 // @icon         https://raw.githubusercontent.com/king1x32/UserScripts/refs/heads/main/kings.jpg
 // @description  Dịch văn bản (bôi đen văn bản), hình ảnh, audio, video bằng Google Gemini API. Hỗ trợ popup phân tích từ vựng, popup dịch và dịch nhanh.
@@ -13,6 +13,8 @@
 // @grant        GM_setValue
 // @grant        GM_registerMenuCommand
 // @require      https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js
+// @require      https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js
 // @downloadURL  https://raw.githubusercontent.com/king1x32/UserScripts/refs/heads/main/Gemini_AI_Translator_(Inline&Popup).user.js
 // @updateURL    https://raw.githubusercontent.com/king1x32/UserScripts/refs/heads/main/Gemini_AI_Translator_(Inline&Popup).user.js
 // ==/UserScript==
@@ -27,22 +29,22 @@
             fast: [
               "gemini-2.0-flash-lite",
               "gemini-2.0-flash",
-              "gemini-2.0-flash-exp"
+              "gemini-2.0-flash-exp",
             ],
             pro: ["gemini-2.0-pro-exp-02-05", "gemini-2.0-pro-exp"],
             vision: [
               "gemini-2.0-flash-thinking-exp-01-21",
-              "gemini-2.0-flash-thinking-exp"
-            ]
+              "gemini-2.0-flash-thinking-exp",
+            ],
           },
           headers: { "Content-Type": "application/json" },
           body: (prompt) => ({
             contents: [
               {
-                parts: [{ text: prompt }]
-              }
+                parts: [{ text: prompt }],
+              },
             ],
-            generationConfig: { temperature: 0.7 }
+            generationConfig: { temperature: 0.7 },
           }),
           responseParser: (response) => {
             console.log("Parsing response:", response);
@@ -53,43 +55,43 @@
               return response.candidates[0].content.parts[0].text;
             }
             throw new Error("Không thể đọc kết quả từ API");
-          }
+          },
         },
         openai: {
           url: () => "https://api.groq.com/openai/v1/chat/completions",
           headers: (apiKey) => ({
             "Content-Type": "application/json",
-            Authorization: `Bearer ${apiKey}`
+            Authorization: `Bearer ${apiKey}`,
           }),
           body: (prompt) => ({
             model: "llama-3.3-70b-versatile",
             messages: [{ role: "user", content: prompt }],
-            temperature: 0.7
+            temperature: 0.7,
           }),
-          responseParser: (response) => response.choices?.[0]?.message?.content
-        }
+          responseParser: (response) => response.choices?.[0]?.message?.content,
+        },
       },
       currentProvider: "gemini",
       apiKey: {
         gemini: [
-          "" // Default key
+          "", // Default key
         ],
         openai: [
-          "" // Default key
-        ]
+          "", // Default key
+        ],
       },
       currentKeyIndex: {
         gemini: 0,
-        openai: 0
+        openai: 0,
       },
       maxRetries: 3,
-      retryDelay: 1000
+      retryDelay: 1000,
     },
     OCR: {
       generation: {
         temperature: 0.2,
         topP: 0.9,
-        topK: 50
+        topK: 50,
       },
       maxFileSize: 15 * 1024 * 1024, // 15MB
       supportedFormats: [
@@ -97,14 +99,14 @@
         "image/png",
         "image/webp",
         "image/heic",
-        "image/heif"
-      ]
+        "image/heif",
+      ],
     },
     MEDIA: {
       generation: {
         temperature: 0.2,
         topP: 0.9,
-        topK: 50
+        topK: 50,
       },
       audio: {
         maxSize: 100 * 1024 * 1024, // 100MB
@@ -119,8 +121,8 @@
           "audio/opus",
           "audio/amr",
           "audio/midi",
-          "audio/mpa"
-        ]
+          "audio/mpa",
+        ],
       },
       video: {
         maxSize: 200 * 1024 * 1024, // 200MB
@@ -134,11 +136,13 @@
           "video/x-flv",
           "video/3gpp",
           "video/3gpp2",
-          "video/x-matroska"
-        ]
-      }
+          "video/x-matroska",
+        ],
+      },
     },
-    contextMenu: true,
+    contextMenu: {
+      enabled: true
+    },
     pageTranslation: {
       enabled: true, // Bật/tắt tính năng
       autoTranslate: true,
@@ -161,26 +165,26 @@
         "button",
         ".no-translate",
         "[data-notranslate]",
-        "[translate='no']"
-      ]
+        "[translate='no']",
+      ],
     },
     CACHE: {
       text: {
         maxSize: 100, // Tối đa 100 entries cho text
-        expirationTime: 300000 // 5 phút
+        expirationTime: 300000, // 5 phút
       },
       image: {
         maxSize: 50, // Tối đa 50 entries cho ảnh
-        expirationTime: 1800000 // 30 phút
+        expirationTime: 1800000, // 30 phút
       },
       media: {
         maxSize: 50, // Số lượng media được cache tối đa
-        expirationTime: 1800000 // 30 phút
-      }
+        expirationTime: 1800000, // 30 phút
+      },
     },
     RATE_LIMIT: {
       maxRequests: 5,
-      perMilliseconds: 10000
+      perMilliseconds: 10000,
     },
     THEME: {
       mode: "dark",
@@ -192,8 +196,8 @@
         content: "#555",
         button: {
           close: { background: "#ff4444", text: "#ddd" },
-          translate: { background: "#007BFF", text: "#ddd" }
-        }
+          translate: { background: "#007BFF", text: "#ddd" },
+        },
       },
       dark: {
         background: "#222",
@@ -203,9 +207,9 @@
         content: "#bbb",
         button: {
           close: { background: "#aa2222", text: "#ddd" },
-          translate: { background: "#004a99", text: "#ddd" }
-        }
-      }
+          translate: { background: "#004a99", text: "#ddd" },
+        },
+      },
     },
     STYLES: {
       translation: {
@@ -216,7 +220,7 @@
         color: "#333",
         position: "relative",
         fontFamily: "SF Pro Rounded, sans-serif",
-        fontSize: "16px"
+        fontSize: "16px",
       },
       popup: {
         position: "fixed",
@@ -235,7 +239,7 @@
         transform: "translate(-50%, -50%)",
         display: "flex",
         flexDirection: "column",
-        overflowY: "auto"
+        overflowY: "auto",
       },
       button: {
         position: "fixed",
@@ -244,7 +248,7 @@
         padding: "5px 10px",
         cursor: "pointer",
         zIndex: "2147483647",
-        fontSize: "14px"
+        fontSize: "14px",
       },
       dragHandle: {
         padding: "10px",
@@ -255,33 +259,35 @@
         justifyContent: "space-between",
         alignItems: "center",
         borderTopLeftRadius: "15px",
-        borderTopRightRadius: "15px"
-      }
-    }
+        borderTopRightRadius: "15px",
+      },
+    },
   };
   const DEFAULT_SETTINGS = {
     theme: CONFIG.THEME.mode,
     apiProvider: CONFIG.API.currentProvider,
     apiKey: {
       gemini: [
-        "" // Default key
+        "", // Default key
       ],
       openai: [
-        "" // Default key
-      ]
+        "", // Default key
+      ],
     },
     currentKeyIndex: {
       gemini: 0,
-      openai: 0
+      openai: 0,
     },
     geminiOptions: {
       modelType: "fast", // 'fast', 'pro', 'vision', 'custom'
       fastModel: "gemini-2.0-flash-lite",
       proModel: "gemini-2.0-pro-exp-02-05",
       visionModel: "gemini-2.0-flash-thinking-exp-01-21",
-      customModel: ""
+      customModel: "",
     },
-    contextMenu: true,
+    contextMenu: {
+      enabled: true
+    },
     pageTranslation: {
       enabled: true, // Bật/tắt tính năng
       autoTranslate: true,
@@ -304,8 +310,8 @@
         "button",
         ".no-translate",
         "[data-notranslate]",
-        "[translate='no']"
-      ]
+        "[translate='no']",
+      ],
     },
     ocrOptions: {
       enabled: true,
@@ -314,7 +320,7 @@
       maxFileSize: CONFIG.OCR.maxFileSize,
       temperature: CONFIG.OCR.generation.temperature,
       topP: CONFIG.OCR.generation.topP,
-      topK: CONFIG.OCR.generation.topK
+      topK: CONFIG.OCR.generation.topK,
     },
     mediaOptions: {
       enabled: true,
@@ -327,15 +333,15 @@
         format: {
           sampleRate: 44100,
           numChannels: 1,
-          bitsPerSample: 16
-        }
-      }
+          bitsPerSample: 16,
+        },
+      },
     },
     displayOptions: {
       showOriginalText: true,
       fontSize: "16px",
       minPopupWidth: "300px",
-      maxPopupWidth: "90vw"
+      maxPopupWidth: "90vw",
     },
     shortcuts: {
       settingsEnabled: true,
@@ -343,43 +349,213 @@
       pageTranslate: { key: "f", altKey: true },
       quickTranslate: { key: "q", altKey: true },
       popupTranslate: { key: "e", altKey: true },
-      advancedTranslate: { key: "a", altKey: true }
+      advancedTranslate: { key: "a", altKey: true },
     },
     clickOptions: {
       enabled: true,
       singleClick: { translateType: "popup" },
       doubleClick: { translateType: "quick" },
-      hold: { translateType: "advanced" }
+      hold: { translateType: "advanced" },
     },
     touchOptions: {
       enabled: true,
       sensitivity: 100,
       twoFingers: { translateType: "popup" },
       threeFingers: { translateType: "advanced" },
-      fourFingers: { translateType: "quick" }
+      fourFingers: { translateType: "quick" },
     },
     cacheOptions: {
       text: {
         enabled: true,
         maxSize: CONFIG.CACHE.text.maxSize,
-        expirationTime: CONFIG.CACHE.text.expirationTime
+        expirationTime: CONFIG.CACHE.text.expirationTime,
       },
       image: {
         enabled: true,
         maxSize: CONFIG.CACHE.image.maxSize,
-        expirationTime: CONFIG.CACHE.image.expirationTime
+        expirationTime: CONFIG.CACHE.image.expirationTime,
       },
       media: {
         enabled: true,
         maxSize: CONFIG.CACHE.media.maxSize,
-        expirationTime: CONFIG.CACHE.media.expirationTime
-      }
+        expirationTime: CONFIG.CACHE.media.expirationTime,
+      },
     },
     rateLimit: {
       maxRequests: CONFIG.RATE_LIMIT.maxRequests,
-      perMilliseconds: CONFIG.RATE_LIMIT.perMilliseconds
-    }
+      perMilliseconds: CONFIG.RATE_LIMIT.perMilliseconds,
+    },
   };
+  class NetworkOptimizer {
+    constructor() {
+      this.queue = [];
+      this.processing = false;
+      this.retryDelays = [1000, 2000, 4000];
+    }
+
+    async optimizeRequest(request) {
+      const priority = this.calculatePriority(request);
+      const optimizedRequest = {
+        ...request,
+        priority,
+        retries: 0,
+        timestamp: Date.now(),
+      };
+
+      this.queue.push(optimizedRequest);
+      if (!this.processing) {
+        this.processQueue();
+      }
+    }
+
+    calculatePriority(request) {
+      return request.urgent ? 1 : 0;
+    }
+
+    async processQueue() {
+      this.processing = true;
+      while (this.queue.length > 0) {
+        const batch = this.createBatch();
+        await this.processBatch(batch);
+      }
+      this.processing = false;
+    }
+
+    createBatch() {
+      return this.queue.sort((a, b) => b.priority - a.priority).slice(0, 5);
+    }
+
+    async processBatch(batch) {
+      try {
+        await Promise.all(batch.map((request) => this.executeRequest(request)));
+      } catch (error) {
+        console.error("Batch processing error:", error);
+      }
+    }
+
+    async executeRequest(request) {
+      try {
+        const response = await fetch(request.url, request.options);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return await response.json();
+      } catch (error) {
+        if (request.retries < this.retryDelays.length) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, this.retryDelays[request.retries]),
+          );
+          request.retries++;
+          return this.executeRequest(request);
+        }
+        throw error;
+      }
+    }
+  }
+  class MobileOptimizer {
+    constructor(ui) {
+      this.ui = ui;
+      this.isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      if (this.isMobile) {
+        this.optimizeForMobile();
+      }
+    }
+
+    optimizeForMobile() {
+      this.reduceDOMOperations();
+      this.optimizeTouchHandling();
+      this.adjustUIForMobile();
+    }
+
+    reduceDOMOperations() {
+      const observer = new MutationObserver((mutations) => {
+        requestAnimationFrame(() => {
+          mutations.forEach((mutation) => {
+            if (mutation.type === "childList") {
+              this.optimizeAddedNodes(mutation.addedNodes);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+      });
+    }
+
+    optimizeTouchHandling() {
+      let touchStartY = 0;
+      let touchStartX = 0;
+
+      document.addEventListener(
+        "touchstart",
+        (e) => {
+          touchStartY = e.touches[0].clientY;
+          touchStartX = e.touches[0].clientX;
+        },
+        { passive: true },
+      );
+
+      document.addEventListener(
+        "touchmove",
+        (e) => {
+          const touchY = e.touches[0].clientY;
+          const touchX = e.touches[0].clientX;
+
+          if (
+            Math.abs(touchY - touchStartY) > 10 ||
+            Math.abs(touchX - touchStartX) > 10
+          ) {
+            this.ui.removeTranslateButton();
+          }
+        },
+        { passive: true },
+      );
+    }
+
+    adjustUIForMobile() {
+      const style = document.createElement("style");
+      style.textContent = `
+      .translator-tools-container {
+        bottom: 10px !important;
+        right: 10px !important;
+      }
+
+      .translator-tools-button {
+        padding: 8px 15px !important;
+        font-size: 14px !important;
+      }
+
+      .translator-tools-dropdown {
+        width: 250px !important;
+        max-height: 60vh !important;
+        overflow-y: auto !important;
+      }
+
+      .translator-tools-item {
+        padding: 10px !important;
+      }
+
+      .draggable {
+        max-width: 95vw !important;
+        max-height: 80vh !important;
+      }
+    `;
+      document.head.appendChild(style);
+    }
+
+    optimizeAddedNodes(nodes) {
+      nodes.forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          const images = node.getElementsByTagName("img");
+          Array.from(images).forEach((img) => {
+            if (!img.loading) img.loading = "lazy";
+          });
+        }
+      });
+    }
+  }
   class UserSettings {
     constructor(translator) {
       this.translator = translator;
@@ -396,7 +572,7 @@
       const geminiModels = {
         fast: CONFIG.API.providers.gemini.models.fast || [],
         pro: CONFIG.API.providers.gemini.models.pro || [],
-        vision: CONFIG.API.providers.gemini.models.vision || []
+        vision: CONFIG.API.providers.gemini.models.vision || [],
       };
       container.style.cssText = `
         all: initial;
@@ -638,10 +814,10 @@
         <div class="api-key-entry" style="display: flex; gap: 10px; margin-bottom: 5px;">
           <input type="text" class="gemini-key" value="${key}" style="flex: 1; width: 100%;">
           <button class="remove-key" data-provider="gemini" data-index="${this.settings.apiKey.gemini.indexOf(
-              key
+              key,
             )}" style="background: #ff4444;">×</button>
         </div>
-      `
+      `,
           )
           .join("")}
     </div>
@@ -656,10 +832,10 @@
         <div class="api-key-entry" style="display: flex; gap: 10px; margin-bottom: 5px;">
           <input type="text" class="openai-key" value="${key}" style="flex: 1; width: 100%;">
           <button class="remove-key" data-provider="openai" data-index="${this.settings.apiKey.openai.indexOf(
-              key
+              key,
             )}" style="background: #ff4444;">×</button>
         </div>
-      `
+      `,
           )
           .join("")}
     </div>
@@ -692,7 +868,7 @@
             (model) => `
       <option value="${model}" ${this.settings.geminiOptions?.fastModel === model ? "selected" : ""
               }>${model}</option>
-      `
+      `,
           )
           .join("")}
     </select>
@@ -708,7 +884,7 @@
             (model) => `
       <option value="${model}" ${this.settings.geminiOptions?.proModel === model ? "selected" : ""
               }>${model}</option>
-      `
+      `,
           )
           .join("")}
     </select>
@@ -724,7 +900,7 @@
             (model) => `
       <option value="${model}" ${this.settings.geminiOptions?.visionModel === model ? "selected" : ""
               }>${model}</option>
-      `
+      `,
           )
           .join("")}
     </select>
@@ -945,7 +1121,7 @@
   <h3>CONTEXT MENU</h3>
   <div class="settings-grid">
     <span class="settings-label">Bật Context Menu:</span>
-    <input type="checkbox" id="contextMenuEnabled" ${this.settings.contextMenu ? "checked" : ""
+    <input type="checkbox" id="contextMenuEnabled" ${this.settings.contextMenu?.enabled ? "checked" : ""
         }>
   </div>
 </div>
@@ -1234,10 +1410,10 @@
       const addGeminiKey = container.querySelector("#addGeminiKey");
       const addOpenaiKey = container.querySelector("#addOpenaiKey");
       const geminiContainer = container.querySelector(
-        "#geminiKeys .api-keys-container"
+        "#geminiKeys .api-keys-container",
       );
       const openaiContainer = container.querySelector(
-        "#openaiKeys .api-keys-container"
+        "#openaiKeys .api-keys-container",
       );
       addGeminiKey.addEventListener("click", () => {
         const newEntry = document.createElement("div");
@@ -1269,12 +1445,12 @@
           const index = parseInt(e.target.dataset.index);
           e.target.parentElement.remove();
           const container = document.querySelector(
-            `#${provider}Keys .api-keys-container`
+            `#${provider}Keys .api-keys-container`,
           );
           Array.from(container.querySelectorAll(".remove-key")).forEach(
             (btn, i) => {
               btn.dataset.index = i;
-            }
+            },
           );
         }
       });
@@ -1346,7 +1522,7 @@
       const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
       const filename = `king1x32-translator-settings-${timestamp}.json`;
       const blob = new Blob([JSON.stringify(settings, null, 2)], {
-        type: "application/json"
+        type: "application/json",
       });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -1390,7 +1566,7 @@
         "clickOptions",
         "touchOptions",
         "cacheOptions",
-        "rateLimit"
+        "rateLimit",
       ];
       if (settings.pageTranslation) {
         if (!Array.isArray(settings.pageTranslation.excludeSelectors)) {
@@ -1407,7 +1583,7 @@
         info: "#4a90e2",
         success: "#28a745",
         warning: "#ffc107",
-        error: "#dc3545"
+        error: "#dc3545",
       };
       const backgroundColor = colors[type] || colors.info;
       const textColor = type === "warning" ? "#000" : "#fff";
@@ -1424,7 +1600,7 @@
         animation: "fadeInOut 2s ease",
         fontFamily: "Arial, sans-serif",
         fontSize: "14px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
+        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
       });
       notification.textContent = message;
       document.body.appendChild(notification);
@@ -1442,70 +1618,72 @@
         ...savedSettings,
         geminiOptions: {
           ...DEFAULT_SETTINGS.geminiOptions,
-          ...(savedSettings?.geminiOptions || {})
+          ...(savedSettings?.geminiOptions || {}),
         },
         apiKey: {
           gemini: [
-            ...(savedSettings?.apiKey?.gemini || DEFAULT_SETTINGS.apiKey.gemini)
+            ...(savedSettings?.apiKey?.gemini ||
+              DEFAULT_SETTINGS.apiKey.gemini),
           ],
           openai: [
-            ...(savedSettings?.apiKey?.openai || DEFAULT_SETTINGS.apiKey.openai)
-          ]
+            ...(savedSettings?.apiKey?.openai ||
+              DEFAULT_SETTINGS.apiKey.openai),
+          ],
         },
         currentKeyIndex: {
           ...DEFAULT_SETTINGS.currentKeyIndex,
-          ...(savedSettings?.currentKeyIndex || {})
+          ...(savedSettings?.currentKeyIndex || {}),
         },
         contextMenu: {
           ...DEFAULT_SETTINGS.contextMenu,
-          ...(savedSettings?.contextMenu || {})
+          ...(savedSettings?.contextMenu || {}),
         },
         pageTranslation: {
           ...DEFAULT_SETTINGS.pageTranslation,
-          ...(savedSettings?.pageTranslation || {})
+          ...(savedSettings?.pageTranslation || {}),
         },
         ocrOptions: {
           ...DEFAULT_SETTINGS.ocrOptions,
-          ...(savedSettings?.ocrOptions || {})
+          ...(savedSettings?.ocrOptions || {}),
         },
         displayOptions: {
           ...DEFAULT_SETTINGS.displayOptions,
-          ...(savedSettings?.displayOptions || {})
+          ...(savedSettings?.displayOptions || {}),
         },
         shortcuts: {
           ...DEFAULT_SETTINGS.shortcuts,
-          ...(savedSettings?.shortcuts || {})
+          ...(savedSettings?.shortcuts || {}),
         },
         clickOptions: {
           ...DEFAULT_SETTINGS.clickOptions,
-          ...(savedSettings?.clickOptions || {})
+          ...(savedSettings?.clickOptions || {}),
         },
         touchOptions: {
           ...DEFAULT_SETTINGS.touchOptions,
-          ...(savedSettings?.touchOptions || {})
+          ...(savedSettings?.touchOptions || {}),
         },
         cacheOptions: {
           text: {
             ...DEFAULT_SETTINGS.cacheOptions.text,
-            ...(savedSettings?.cacheOptions?.text || {})
+            ...(savedSettings?.cacheOptions?.text || {}),
           },
           image: {
             ...DEFAULT_SETTINGS.cacheOptions.image,
-            ...(savedSettings?.cacheOptions?.image || {})
+            ...(savedSettings?.cacheOptions?.image || {}),
           },
           media: {
             ...DEFAULT_SETTINGS.cacheOptions.media,
-            ...(savedSettings?.cacheOptions?.media || {})
+            ...(savedSettings?.cacheOptions?.media || {}),
           },
           page: {
             ...DEFAULT_SETTINGS.cacheOptions.page,
-            ...(savedSettings?.cacheOptions?.page || {})
-          }
+            ...(savedSettings?.cacheOptions?.page || {}),
+          },
         },
         rateLimit: {
           ...DEFAULT_SETTINGS.rateLimit,
-          ...(savedSettings?.rateLimit || {})
-        }
+          ...(savedSettings?.rateLimit || {}),
+        },
       };
     }
     saveSettings(settingsUI) {
@@ -1518,170 +1696,181 @@
       const maxWidthVw = settingsUI.querySelector("#maxPopupWidth").value;
       const maxWidthPx = (window.innerWidth * parseInt(maxWidthVw)) / 100;
       const minWidthPx = parseInt(
-        settingsUI.querySelector("#minPopupWidth").value
+        settingsUI.querySelector("#minPopupWidth").value,
       );
       const finalMinWidth =
         minWidthPx > maxWidthPx
-          ? maxWidthVw : settingsUI.querySelector("#minPopupWidth").value; const newSettings = {
-            theme: settingsUI.querySelector('input[name="theme"]:checked').value,
-            apiProvider: settingsUI.querySelector(
-              'input[name="apiProvider"]:checked'
-            ).value,
-            apiKey: {
-              gemini:
-                geminiKeys.length > 0
-                  ? geminiKeys
-                  : [DEFAULT_SETTINGS.apiKey.gemini[0]],
-              openai:
-                openaiKeys.length > 0
-                  ? openaiKeys
-                  : [DEFAULT_SETTINGS.apiKey.openai[0]]
-            },
-            currentKeyIndex: {
-              gemini: 0,
-              openai: 0
-            },
-            geminiOptions: {
-              modelType: settingsUI.querySelector("#geminiModelType").value,
-              fastModel: settingsUI.querySelector("#fastModel").value,
-              proModel: settingsUI.querySelector("#proModel").value,
-              visionModel: settingsUI.querySelector("#visionModel").value,
-              customModel: settingsUI.querySelector("#customModel").value
-            },
-            contextMenu: settingsUI.querySelector("#contextMenuEnabled").checked,
-            pageTranslation: {
-              enabled: settingsUI.querySelector("#pageTranslationEnabled").checked,
-              autoTranslate: settingsUI.querySelector("#autoTranslatePage").checked,
-              showInitialButton:
-                settingsUI.querySelector("#showInitialButton").checked,
-              buttonTimeout: DEFAULT_SETTINGS.pageTranslation.buttonTimeout,
-              excludeSelectors: settingsUI
-                .querySelector("#excludeSelectors")
-                .value.split("\n")
-                .map((s) => s.trim())
-                .filter((s) => s && s.length > 0)
-            },
-            ocrOptions: {
-              enabled: settingsUI.querySelector("#ocrEnabled").checked,
-              preferredProvider: settingsUI.querySelector(
-                'input[name="apiProvider"]:checked'
-              ).value,
-              displayType: "popup",
-              maxFileSize: CONFIG.OCR.maxFileSize,
-              temperature: parseFloat(
-                settingsUI.querySelector("#ocrTemperature").value
-              ),
-              topP: parseFloat(settingsUI.querySelector("#ocrTopP").value),
-              topK: parseInt(settingsUI.querySelector("#ocrTopK").value)
-            },
-            mediaOptions: {
-              enabled: settingsUI.querySelector("#mediaEnabled").checked,
-              temperature: parseFloat(
-                settingsUI.querySelector("#mediaTemperature").value
-              ),
-              topP: parseFloat(settingsUI.querySelector("#mediaTopP").value),
-              topK: parseInt(settingsUI.querySelector("#mediaTopK").value)
-            },
-            displayOptions: {
-              showOriginalText:
-                settingsUI.querySelector("#showOriginalText").checked,
-              fontSize: settingsUI.querySelector("#fontSize").value,
-              minPopupWidth: finalMinWidth,
-              maxPopupWidth: maxWidthVw
-            },
-            shortcuts: {
-              settingsEnabled: settingsUI.querySelector("#settingsShortcutEnabled")
-                .checked,
-              enabled: settingsUI.querySelector("#shortcutsEnabled").checked,
-              pageTranslate: {
-                key: settingsUI.querySelector("#pageTranslateKey").value,
-                altKey: true
-              },
-              quickTranslate: {
-                key: settingsUI.querySelector("#quickKey").value,
-                altKey: true
-              },
-              popupTranslate: {
-                key: settingsUI.querySelector("#popupKey").value,
-                altKey: true
-              },
-              advancedTranslate: {
-                key: settingsUI.querySelector("#advancedKey").value,
-                altKey: true
-              }
-            },
-            clickOptions: {
-              enabled: settingsUI.querySelector("#translationButtonEnabled")
-                .checked,
-              singleClick: {
-                translateType: settingsUI.querySelector("#singleClickSelect").value
-              },
-              doubleClick: {
-                translateType: settingsUI.querySelector("#doubleClickSelect").value
-              },
-              hold: {
-                translateType: settingsUI.querySelector("#holdSelect").value
-              }
-            },
-            touchOptions: {
-              enabled: settingsUI.querySelector("#touchEnabled").checked,
-              sensitivity: parseInt(
-                settingsUI.querySelector("#touchSensitivity").value
-              ),
-              twoFingers: {
-                translateType: settingsUI.querySelector("#twoFingersSelect").value
-              },
-              threeFingers: {
-                translateType: settingsUI.querySelector("#threeFingersSelect").value
-              }
-            },
-            cacheOptions: {
-              text: {
-                enabled: settingsUI.querySelector("#textCacheEnabled").checked,
-                maxSize: parseInt(
-                  settingsUI.querySelector("#textCacheMaxSize").value
-                ),
-                expirationTime: parseInt(
-                  settingsUI.querySelector("#textCacheExpiration").value
-                )
-              },
-              image: {
-                enabled: settingsUI.querySelector("#imageCacheEnabled").checked,
-                maxSize: parseInt(
-                  settingsUI.querySelector("#imageCacheMaxSize").value
-                ),
-                expirationTime: parseInt(
-                  settingsUI.querySelector("#imageCacheExpiration").value
-                )
-              },
-              media: {
-                enabled: document.getElementById("mediaCacheEnabled").checked,
-                maxSize: parseInt(
-                  document.getElementById("mediaCacheMaxSize").value
-                ),
-                expirationTime:
-                  parseInt(
-                    document.getElementById("mediaCacheExpirationTime").value
-                  ) * 1000
-              }
-            },
-            rateLimit: {
-              maxRequests: parseInt(settingsUI.querySelector("#maxRequests").value),
-              perMilliseconds: parseInt(
-                settingsUI.querySelector("#perMilliseconds").value
-              )
-            }
-          };
-      const isToolsEnabled = settingsUI.querySelector("#showTranslatorTools").checked;
-      const currentState = localStorage.getItem("translatorToolsEnabled") === "true";
+          ? maxWidthVw
+          : settingsUI.querySelector("#minPopupWidth").value;
+      const newSettings = {
+        theme: settingsUI.querySelector('input[name="theme"]:checked').value,
+        apiProvider: settingsUI.querySelector(
+          'input[name="apiProvider"]:checked',
+        ).value,
+        apiKey: {
+          gemini:
+            geminiKeys.length > 0
+              ? geminiKeys
+              : [DEFAULT_SETTINGS.apiKey.gemini[0]],
+          openai:
+            openaiKeys.length > 0
+              ? openaiKeys
+              : [DEFAULT_SETTINGS.apiKey.openai[0]],
+        },
+        currentKeyIndex: {
+          gemini: 0,
+          openai: 0,
+        },
+        geminiOptions: {
+          modelType: settingsUI.querySelector("#geminiModelType").value,
+          fastModel: settingsUI.querySelector("#fastModel").value,
+          proModel: settingsUI.querySelector("#proModel").value,
+          visionModel: settingsUI.querySelector("#visionModel").value,
+          customModel: settingsUI.querySelector("#customModel").value,
+        },
+        contextMenu: {
+          enabled: settingsUI.querySelector("#contextMenuEnabled").checked,
+        },
+        pageTranslation: {
+          enabled: settingsUI.querySelector("#pageTranslationEnabled").checked,
+          autoTranslate: settingsUI.querySelector("#autoTranslatePage").checked,
+          showInitialButton:
+            settingsUI.querySelector("#showInitialButton").checked,
+          buttonTimeout: DEFAULT_SETTINGS.pageTranslation.buttonTimeout,
+          excludeSelectors: settingsUI
+            .querySelector("#excludeSelectors")
+            .value.split("\n")
+            .map((s) => s.trim())
+            .filter((s) => s && s.length > 0),
+        },
+        ocrOptions: {
+          enabled: settingsUI.querySelector("#ocrEnabled").checked,
+          preferredProvider: settingsUI.querySelector(
+            'input[name="apiProvider"]:checked',
+          ).value,
+          displayType: "popup",
+          maxFileSize: CONFIG.OCR.maxFileSize,
+          temperature: parseFloat(
+            settingsUI.querySelector("#ocrTemperature").value,
+          ),
+          topP: parseFloat(settingsUI.querySelector("#ocrTopP").value),
+          topK: parseInt(settingsUI.querySelector("#ocrTopK").value),
+        },
+        mediaOptions: {
+          enabled: settingsUI.querySelector("#mediaEnabled").checked,
+          temperature: parseFloat(
+            settingsUI.querySelector("#mediaTemperature").value,
+          ),
+          topP: parseFloat(settingsUI.querySelector("#mediaTopP").value),
+          topK: parseInt(settingsUI.querySelector("#mediaTopK").value),
+        },
+        displayOptions: {
+          showOriginalText:
+            settingsUI.querySelector("#showOriginalText").checked,
+          fontSize: settingsUI.querySelector("#fontSize").value,
+          minPopupWidth: finalMinWidth,
+          maxPopupWidth: maxWidthVw,
+        },
+        shortcuts: {
+          settingsEnabled: settingsUI.querySelector("#settingsShortcutEnabled")
+            .checked,
+          enabled: settingsUI.querySelector("#shortcutsEnabled").checked,
+          pageTranslate: {
+            key: settingsUI.querySelector("#pageTranslateKey").value,
+            altKey: true,
+          },
+          quickTranslate: {
+            key: settingsUI.querySelector("#quickKey").value,
+            altKey: true,
+          },
+          popupTranslate: {
+            key: settingsUI.querySelector("#popupKey").value,
+            altKey: true,
+          },
+          advancedTranslate: {
+            key: settingsUI.querySelector("#advancedKey").value,
+            altKey: true,
+          },
+        },
+        clickOptions: {
+          enabled: settingsUI.querySelector("#translationButtonEnabled")
+            .checked,
+          singleClick: {
+            translateType: settingsUI.querySelector("#singleClickSelect").value,
+          },
+          doubleClick: {
+            translateType: settingsUI.querySelector("#doubleClickSelect").value,
+          },
+          hold: {
+            translateType: settingsUI.querySelector("#holdSelect").value,
+          },
+        },
+        touchOptions: {
+          enabled: settingsUI.querySelector("#touchEnabled").checked,
+          sensitivity: parseInt(
+            settingsUI.querySelector("#touchSensitivity").value,
+          ),
+          twoFingers: {
+            translateType: settingsUI.querySelector("#twoFingersSelect").value,
+          },
+          threeFingers: {
+            translateType: settingsUI.querySelector("#threeFingersSelect")
+              .value,
+          },
+        },
+        cacheOptions: {
+          text: {
+            enabled: settingsUI.querySelector("#textCacheEnabled").checked,
+            maxSize: parseInt(
+              settingsUI.querySelector("#textCacheMaxSize").value,
+            ),
+            expirationTime: parseInt(
+              settingsUI.querySelector("#textCacheExpiration").value,
+            ),
+          },
+          image: {
+            enabled: settingsUI.querySelector("#imageCacheEnabled").checked,
+            maxSize: parseInt(
+              settingsUI.querySelector("#imageCacheMaxSize").value,
+            ),
+            expirationTime: parseInt(
+              settingsUI.querySelector("#imageCacheExpiration").value,
+            ),
+          },
+          media: {
+            enabled: document.getElementById("mediaCacheEnabled").checked,
+            maxSize: parseInt(
+              document.getElementById("mediaCacheMaxSize").value,
+            ),
+            expirationTime:
+              parseInt(
+                document.getElementById("mediaCacheExpirationTime").value,
+              ) * 1000,
+          },
+        },
+        rateLimit: {
+          maxRequests: parseInt(settingsUI.querySelector("#maxRequests").value),
+          perMilliseconds: parseInt(
+            settingsUI.querySelector("#perMilliseconds").value,
+          ),
+        },
+      };
+      const isToolsEnabled = settingsUI.querySelector(
+        "#showTranslatorTools",
+      ).checked;
+      const currentState =
+        localStorage.getItem("translatorToolsEnabled") === "true";
       if (isToolsEnabled !== currentState) {
-        localStorage.setItem("translatorToolsEnabled", isToolsEnabled.toString());
+        localStorage.setItem(
+          "translatorToolsEnabled",
+          isToolsEnabled.toString(),
+        );
         this.translator.ui.removeToolsListeners();
         this.translator.ui.removeToolsContainer();
         this.translator.ui.removeAllProcessingIndicators();
         this.translator.ui.resetState();
-        const overlays = document.querySelectorAll('.translator-overlay');
-        overlays.forEach(overlay => overlay.remove());
+        const overlays = document.querySelectorAll(".translator-overlay");
+        overlays.forEach((overlay) => overlay.remove());
         if (isToolsEnabled) {
           this.translator.ui.setupTranslatorTools();
         }
@@ -1690,7 +1879,7 @@
       GM_setValue("translatorSettings", JSON.stringify(mergedSettings));
       this.settings = mergedSettings;
       const event = new CustomEvent("settingsChanged", {
-        detail: mergedSettings
+        detail: mergedSettings,
       });
       document.dispatchEvent(event);
       return mergedSettings;
@@ -1701,22 +1890,32 @@
   }
   class OCRManager {
     constructor(translator) {
+      if (!translator) {
+        throw new Error("Translator instance is required for OCRManager");
+      }
       this.translator = translator;
       this.isProcessing = false;
       this.imageCache = new ImageCache();
     }
+
     async captureScreen() {
       try {
-        console.log("Starting screen capture...");
+        this.translator.ui.showProcessingStatus(
+          "Đang chuẩn bị chụp màn hình...",
+        );
+
+        // Ẩn các elements của translator
         const elements = document.querySelectorAll(
-          ".translator-tools-container, .translator-notification, .center-translate-status"
+          ".translator-tools-container, .translator-notification, .center-translate-status",
         );
         elements.forEach((el) => {
           if (el) el.style.visibility = "hidden";
         });
+
         await new Promise((resolve) => setTimeout(resolve, 100));
-        console.log("Capturing screen with html2canvas...");
-        const canvas = await html2canvas(document.documentElement, {
+
+        // Cấu hình html2canvas
+        const options = {
           useCORS: true,
           allowTaint: true,
           foreignObjectRendering: true,
@@ -1730,14 +1929,18 @@
           y: window.pageYOffset,
           onclone: function(clonedDoc) {
             const elements = clonedDoc.querySelectorAll(
-              ".translator-tools-container, .translator-notification, .center-translate-status"
+              ".translator-tools-container, .translator-notification, .center-translate-status",
             );
             elements.forEach((el) => {
               if (el) el.style.display = "none";
             });
-          }
-        });
-        console.log("Screen captured, converting to blob...");
+          },
+        };
+
+        this.translator.ui.updateProcessingStatus("Đang chụp màn hình...", 30);
+        const canvas = await html2canvas(document.documentElement, options);
+
+        this.translator.ui.updateProcessingStatus("Đang xử lý ảnh...", 60);
         const blob = await new Promise((resolve, reject) => {
           try {
             canvas.toBlob(
@@ -1749,23 +1952,26 @@
                 }
               },
               "image/png",
-              1.0
+              1.0,
             );
           } catch (error) {
             reject(error);
           }
         });
+
+        // Khôi phục visibility của các elements
         elements.forEach((el) => {
           if (el) el.style.visibility = "";
         });
-        console.log("Creating file from blob...");
-        const file = new File([blob], "screenshot.png", { type: "image/png" });
-        console.log("Screen capture completed successfully");
+
+        this.translator.ui.updateProcessingStatus("Đang chuẩn bị OCR...", 80);
+        const file = new File([blob], "king1x32_screenshot.png", { type: "image/png" });
         return file;
       } catch (error) {
         console.error("Screen capture error:", error);
+        // Khôi phục visibility trong trường hợp lỗi
         const elements = document.querySelectorAll(
-          ".translator-tools-container, .translator-notification, .center-translate-status"
+          ".translator-tools-container, .translator-notification, .center-translate-status",
         );
         elements.forEach((el) => {
           if (el) el.style.visibility = "";
@@ -1773,32 +1979,31 @@
         throw new Error(`Không thể chụp màn hình: ${error.message}`);
       }
     }
-    async processImage(file) {
-      if (!this.translator.userSettings.settings.ocrOptions.enabled) {
-        throw new Error("Tính năng OCR đang bị tắt");
-      }
-      if (this.isProcessing) {
-        throw new Error("Đang xử lý ảnh khác, vui lòng đợi");
-      }
 
+    async processImage(file) {
       try {
         this.isProcessing = true;
-
-        if (!file) throw new Error("Không có file ảnh");
-        if (!CONFIG.OCR.supportedFormats.includes(file.type)) {
-          throw new Error("Định dạng file không được hỗ trợ");
-        }
-        if (file.size > CONFIG.OCR.maxFileSize) {
-          throw new Error(`File quá lớn. Kích thước tối đa: ${CONFIG.OCR.maxFileSize / (1024 * 1024)}MB`);
-        }
+        this.translator.ui.showProcessingStatus("Đang xử lý ảnh...");
 
         const base64Image = await this.fileToBase64(file);
+        this.translator.ui.updateProcessingStatus("Đang kiểm tra cache...", 20);
 
         // Kiểm tra cache
-        if (this.imageCache && this.translator.userSettings.settings.cacheOptions.image.enabled) {
+        if (
+          this.imageCache &&
+          this.translator.userSettings.settings.cacheOptions.image.enabled
+        ) {
           const cachedResult = await this.imageCache.get(base64Image);
-          if (cachedResult) return cachedResult;
+          if (cachedResult) {
+            this.translator.ui.updateProcessingStatus(
+              "Đã tìm thấy trong cache",
+              100,
+            );
+            return cachedResult;
+          }
         }
+
+        this.translator.ui.updateProcessingStatus("Đang nhận diện text...", 40);
 
         const settings = this.translator.userSettings.settings;
         const selectedModel = this.translator.api.getGeminiModel();
@@ -1808,60 +2013,71 @@
             {
               parts: [
                 {
-                  text: file.name === "screenshot.png"
-                    ? "Đây là ảnh chụp màn hình. Hãy đọc và dịch toàn bộ text trong ảnh sang tiếng Việt một cách tự nhiên và chính xác. Chỉ trả về bản dịch, không cần giải thích gì thêm."
-                    : "Đọc hiểu thật kĩ và dịch toàn bộ văn bản trong hình ảnh sang tiếng Việt thật tự nhiên và chính xác. Chỉ trả về bản dịch, không cần giải thích gì thêm."
+                  text:
+                    file.name === "king1x32_screenshot.png"
+                      ? "Đây là ảnh chụp màn hình. Hãy đọc và dịch toàn bộ text trong ảnh sang tiếng Việt một cách tự nhiên và chính xác. Chỉ trả về bản dịch, không cần giải thích gì thêm."
+                      : "Đọc hiểu thật kĩ và dịch toàn bộ văn bản trong hình ảnh sang tiếng Việt thật tự nhiên và chính xác. Chỉ trả về bản dịch, không cần giải thích gì thêm.",
                 },
                 {
                   inline_data: {
                     mime_type: file.type,
-                    data: base64Image
-                  }
-                }
-              ]
-            }
+                    data: base64Image,
+                  },
+                },
+              ],
+            },
           ],
           generationConfig: {
             temperature: settings.ocrOptions.temperature,
             topP: settings.ocrOptions.topP,
-            topK: settings.ocrOptions.topK
-          }
+            topK: settings.ocrOptions.topK,
+          },
         };
 
-        // Sử dụng executeWithMultipleKeys để xử lý đa luồng API
-        const results = await this.translator.api.keyManager.executeWithMultipleKeys(
-          async (key) => {
-            const response = await new Promise((resolve, reject) => {
-              GM_xmlhttpRequest({
-                method: "POST",
-                url: `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${key}`,
-                headers: { "Content-Type": "application/json" },
-                data: JSON.stringify(requestBody),
-                onload: (response) => {
-                  if (response.status === 200) {
-                    try {
-                      const result = JSON.parse(response.responseText);
-                      if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        resolve(result.candidates[0].content.parts[0].text);
-                      } else {
-                        reject(new Error("Không thể đọc kết quả từ API"));
+        this.translator.ui.updateProcessingStatus("Đang xử lý OCR...", 60);
+
+        const results =
+          await this.translator.api.keyManager.executeWithMultipleKeys(
+            async (key) => {
+              const response = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                  method: "POST",
+                  url: `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${key}`,
+                  headers: { "Content-Type": "application/json" },
+                  data: JSON.stringify(requestBody),
+                  onload: (response) => {
+                    if (response.status === 200) {
+                      try {
+                        const result = JSON.parse(response.responseText);
+                        if (
+                          result?.candidates?.[0]?.content?.parts?.[0]?.text
+                        ) {
+                          resolve(result.candidates[0].content.parts[0].text);
+                        } else {
+                          reject(new Error("Không thể đọc kết quả từ API"));
+                        }
+                      } catch (error) {
+                        reject(new Error("Không thể parse kết quả API"));
                       }
-                    } catch (error) {
-                      reject(new Error("Không thể parse kết quả API"));
+                    } else if (
+                      response.status === 429 ||
+                      response.status === 403
+                    ) {
+                      reject(new Error("API key rate limit exceeded"));
+                    } else {
+                      reject(new Error(`API Error: ${response.status}`));
                     }
-                  } else if (response.status === 429 || response.status === 403) {
-                    reject(new Error("API key rate limit exceeded"));
-                  } else {
-                    reject(new Error(`API Error: ${response.status}`));
-                  }
-                },
-                onerror: (error) => reject(new Error(`Lỗi kết nối: ${error}`))
+                  },
+                  onerror: (error) =>
+                    reject(new Error(`Lỗi kết nối: ${error}`)),
+                });
               });
-            });
-            return response;
-          },
-          settings.apiProvider
-        );
+              return response;
+            },
+            settings.apiProvider,
+          );
+
+        this.translator.ui.updateProcessingStatus("Đang hoàn thiện...", 80);
 
         if (!results || results.length === 0) {
           throw new Error("Không thể trích xuất text từ ảnh");
@@ -1874,13 +2090,14 @@
           await this.imageCache.set(base64Image, finalResult);
         }
 
+        this.translator.ui.updateProcessingStatus("Hoàn thành", 100);
         return finalResult;
-
       } catch (error) {
         console.error("OCR processing error:", error);
         throw error;
       } finally {
         this.isProcessing = false;
+        setTimeout(() => this.translator.ui.removeProcessingStatus(), 1000);
       }
     }
     fileToBase64(file) {
@@ -1898,94 +2115,120 @@
       this.isProcessing = false;
       this.mediaCache = new MediaCache();
     }
-    async processMediaFile(file) {
-      if (!this.translator.userSettings.settings.mediaOptions.enabled) {
-        throw new Error("Tính năng dịch media đang bị tắt");
-      }
-      if (this.isProcessing) {
-        throw new Error("Đang xử lý media khác, vui lòng đợi");
-      }
-      if (!this.isValidFormat(file)) {
-        throw new Error("Định dạng file không được hỗ trợ");
-      }
-      if (!this.isValidSize(file)) {
-        throw new Error(`File quá lớn (tối đa ${this.getMaxSizeInMB(file)}MB)`);
-      }
 
+    async processMediaFile(file) {
       try {
+        // Kiểm tra định dạng và kích thước
+        if (!this.isValidFormat(file)) {
+          throw new Error("Định dạng file không được hỗ trợ");
+        }
+
+        if (!this.isValidSize(file)) {
+          throw new Error(
+            `File quá lớn. Kích thước tối đa: ${this.getMaxSizeInMB(file)}MB`,
+          );
+        }
+
         this.isProcessing = true;
+        this.translator.ui.showProcessingStatus("Đang xử lý media...");
+
         const base64Media = await this.fileToBase64(file);
+        this.translator.ui.updateProcessingStatus("Đang kiểm tra cache...", 20);
 
         // Kiểm tra cache
-        if (this.mediaCache && this.translator.userSettings.settings.cacheOptions.media?.enabled) {
+        const cacheEnabled =
+          this.translator.userSettings.settings.cacheOptions.media?.enabled;
+        if (cacheEnabled && this.mediaCache) {
           const cachedResult = await this.mediaCache.get(base64Media);
           if (cachedResult) {
+            this.translator.ui.updateProcessingStatus(
+              "Đã tìm thấy trong cache",
+              100,
+            );
             this.translator.ui.displayPopup(cachedResult, null, "Bản dịch");
             return;
           }
         }
 
+        this.translator.ui.updateProcessingStatus(
+          "Đang xử lý audio/video...",
+          40,
+        );
+
+        // Lấy settings từ user settings
         const settings = this.translator.userSettings.settings;
         const mediaSettings = settings.mediaOptions;
         const selectedModel = this.translator.api.getGeminiModel();
 
+        // Tạo request body
         const requestBody = {
           contents: [
             {
               parts: [
                 {
-                  text: "Đây là nội dung audio/video. Chỉ cần nghe thôi nên hãy lắng nghe thật kĩ và dịch sang tiếng Việt thật tự nhiên, đảm bảo truyền tải đúng ý nghĩa và ngữ cảnh của đoạn thoại thật chuẩn. Chỉ trả về bản dịch, không cần giải thích thêm."
+                  text: "Đây là nội dung audio/video. Chỉ cần nghe thôi nên hãy lắng nghe thật kĩ và dịch sang tiếng Việt thật tự nhiên, đảm bảo truyền tải đúng ý nghĩa và ngữ cảnh của đoạn thoại thật chuẩn. Chỉ trả về bản dịch, không cần giải thích thêm.",
                 },
                 {
                   inline_data: {
                     mime_type: file.type,
-                    data: base64Media
-                  }
-                }
-              ]
-            }
+                    data: base64Media,
+                  },
+                },
+              ],
+            },
           ],
           generationConfig: {
             temperature: mediaSettings.temperature,
             topP: mediaSettings.topP,
-            topK: mediaSettings.topK
-          }
+            topK: mediaSettings.topK,
+          },
         };
 
-        // Sử dụng executeWithMultipleKeys để xử lý đa luồng API
-        const results = await this.translator.api.keyManager.executeWithMultipleKeys(
-          async (key) => {
-            const response = await new Promise((resolve, reject) => {
-              GM_xmlhttpRequest({
-                method: "POST",
-                url: `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${key}`,
-                headers: { "Content-Type": "application/json" },
-                data: JSON.stringify(requestBody),
-                onload: (response) => {
-                  if (response.status === 200) {
-                    try {
-                      const result = JSON.parse(response.responseText);
-                      if (result?.candidates?.[0]?.content?.parts?.[0]?.text) {
-                        resolve(result.candidates[0].content.parts[0].text);
-                      } else {
-                        reject(new Error("Không thể đọc kết quả từ API"));
+        this.translator.ui.updateProcessingStatus("Đang dịch...", 60);
+
+        // Gửi request đến API
+        const results =
+          await this.translator.api.keyManager.executeWithMultipleKeys(
+            async (key) => {
+              const response = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                  method: "POST",
+                  url: `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${key}`,
+                  headers: { "Content-Type": "application/json" },
+                  data: JSON.stringify(requestBody),
+                  onload: (response) => {
+                    if (response.status === 200) {
+                      try {
+                        const result = JSON.parse(response.responseText);
+                        if (
+                          result?.candidates?.[0]?.content?.parts?.[0]?.text
+                        ) {
+                          resolve(result.candidates[0].content.parts[0].text);
+                        } else {
+                          reject(new Error("Invalid response format"));
+                        }
+                      } catch (error) {
+                        reject(new Error("Failed to parse response"));
                       }
-                    } catch (error) {
-                      reject(new Error("Không thể parse kết quả API"));
+                    } else if (
+                      response.status === 429 ||
+                      response.status === 403
+                    ) {
+                      reject(new Error("API key rate limit exceeded"));
+                    } else {
+                      reject(new Error(`API Error: ${response.status}`));
                     }
-                  } else if (response.status === 429 || response.status === 403) {
-                    reject(new Error("API key rate limit exceeded"));
-                  } else {
-                    reject(new Error(`API Error: ${response.status}`));
-                  }
-                },
-                onerror: (error) => reject(new Error(`Lỗi kết nối: ${error}`))
+                  },
+                  onerror: (error) =>
+                    reject(new Error(`Connection error: ${error}`)),
+                });
               });
-            });
-            return response;
-          },
-          settings.apiProvider
-        );
+              return response;
+            },
+            settings.apiProvider,
+          );
+
+        this.translator.ui.updateProcessingStatus("Đang hoàn thiện...", 80);
 
         if (!results || results.length === 0) {
           throw new Error("Không thể xử lý media");
@@ -1993,17 +2236,19 @@
 
         const finalResult = results[0];
 
-        // Lưu vào cache nếu có kết quả
-        if (this.mediaCache && settings.cacheOptions.media?.enabled) {
+        // Lưu vào cache nếu được bật
+        if (cacheEnabled && this.mediaCache) {
           await this.mediaCache.set(base64Media, finalResult);
         }
 
+        this.translator.ui.updateProcessingStatus("Hoàn thành", 100);
         this.translator.ui.displayPopup(finalResult, null, "Bản dịch");
-
       } catch (error) {
+        console.error("Media processing error:", error);
         throw new Error(`Không thể xử lý file: ${error.message}`);
       } finally {
         this.isProcessing = false;
+        setTimeout(() => this.translator.ui.removeProcessingStatus(), 1000);
       }
     }
     isValidFormat(file) {
@@ -2029,13 +2274,12 @@
         flv: "video/x-flv",
         "3gp": "video/3gpp",
         "3g2": "video/3gpp2",
-        mkv: "video/x-matroska"
+        mkv: "video/x-matroska",
       };
       const mimeType = mimeMapping[extension];
       if (mimeType?.startsWith("audio/")) {
         return CONFIG.MEDIA.audio.supportedFormats.includes(mimeType);
-      }
-      else if (mimeType?.startsWith("video/")) {
+      } else if (mimeType?.startsWith("video/")) {
         return CONFIG.MEDIA.video.supportedFormats.includes(mimeType);
       }
       return false;
@@ -2108,8 +2352,11 @@
     constructor(translator) {
       this.translator = translator;
       this.MIN_TEXT_LENGTH = 100;
-      this.originalTexts = new Map(); this.isTranslated = false; this.pageCache = new Map();
+      this.originalTexts = new Map();
+      this.isTranslated = false;
+      this.pageCache = new Map();
       this.rateLimiter = new RateLimiter(translator);
+      this.pdfLoaded = true;
     }
     async detectLanguage() {
       try {
@@ -2128,12 +2375,12 @@
         if (languageCode === "vi") {
           return {
             isVietnamese: true,
-            message: "Trang web đã ở tiếng Việt"
+            message: "Trang web đã ở tiếng Việt",
           };
         }
         return {
           isVietnamese: false,
-          message: `Đã phát hiện ngôn ngữ: ${languageCode}`
+          message: `Đã phát hiện ngôn ngữ: ${languageCode}`,
         };
       } catch (error) {
         console.error("Language detection error:", error);
@@ -2146,14 +2393,14 @@
         if (!settings.pageTranslation.autoTranslate) {
           return {
             success: false,
-            message: "Tự động dịch đang tắt"
+            message: "Tự động dịch đang tắt",
           };
         }
         const languageCheck = await this.detectLanguage();
         if (languageCheck.isVietnamese) {
           return {
             success: false,
-            message: languageCheck.message
+            message: languageCheck.message,
           };
         }
         return await this.translatePage();
@@ -2161,7 +2408,7 @@
         console.error("Translation check error:", error);
         return {
           success: false,
-          message: error.message
+          message: error.message,
         };
       }
     }
@@ -2176,14 +2423,14 @@
           this.updateUI("Dịch trang", "📄 Dịch trang");
           return {
             success: true,
-            message: "Đã chuyển về văn bản gốc"
+            message: "Đã chuyển về văn bản gốc",
           };
         }
         const textNodes = this.collectTextNodes();
         if (textNodes.length === 0) {
           return {
             success: false,
-            message: "Không tìm thấy nội dung cần dịch"
+            message: "Không tìm thấy nội dung cần dịch",
           };
         }
         const chunks = this.createChunks(textNodes);
@@ -2200,8 +2447,8 @@
         const chunkGroups = this.distributeChunks(chunks, availableKeys.length);
         const results = await Promise.allSettled(
           chunkGroups.map((group, index) =>
-            this.translateChunkGroup(group, availableKeys[index])
-          )
+            this.translateChunkGroup(group, availableKeys[index]),
+          ),
         );
         let completedChunks = 0;
         let failedChunks = 0;
@@ -2221,13 +2468,37 @@
           failed: failedChunks,
           total: totalChunks,
           message: `Đã dịch xong ${completedChunks}/${totalChunks} phần${failedChunks > 0 ? `, ${failedChunks} phần thất bại` : ""
-            }`
+            }`,
         };
       } catch (error) {
         console.error("Page translation error:", error);
         return {
           success: false,
-          message: error.message
+          message: error.message,
+        };
+      }
+    }
+    async detectContext(text) {
+      const prompt = `Analyze the context and writing style of this text and return JSON format with these properties:
+    - style: formal/informal/technical/casual
+    - tone: professional/friendly/neutral/academic
+    - domain: general/technical/business/academic/other
+    Text: "${text}"`;
+
+      try {
+        const analysis = await this.translator.api.request(prompt);
+        const result = JSON.parse(analysis);
+        return {
+          style: result.style,
+          tone: result.tone,
+          domain: result.domain,
+        };
+      } catch (error) {
+        console.error("Context detection failed:", error);
+        return {
+          style: "neutral",
+          tone: "neutral",
+          domain: "general",
         };
       }
     }
@@ -2287,16 +2558,16 @@
                 {
                   parts: [
                     {
-                      text: `Dịch sang tiếng Việt (Vietnamese), thật tự nhiên, đúng ngữ cảnh, giữ nguyên định dạng phông chữ ban đầu, chỉ trả về bản dịch, không giải thích thêm: "${textsToTranslate}"`
-                    }
-                  ]
-                }
+                      text: `Dịch sang tiếng Việt (Vietnamese), thật tự nhiên, đúng ngữ cảnh, giữ nguyên định dạng phông chữ ban đầu, chỉ trả về bản dịch, không giải thích thêm: "${textsToTranslate}"`,
+                    },
+                  ],
+                },
               ],
               generationConfig: {
                 temperature: 0.1,
                 topP: 0.1,
-                topK: 1
-              }
+                topK: 1,
+              },
             }),
             onload: (response) => {
               if (response.status === 200) {
@@ -2320,7 +2591,7 @@
                 }
               }
             },
-            onerror: (error) => reject(error)
+            onerror: (error) => reject(error),
           });
         });
         const translations = response.split("\n");
@@ -2334,6 +2605,472 @@
       } catch (error) {
         throw error;
       }
+    }
+    async translateHTML(htmlContent) {
+      try {
+        // Tạo DOM parser
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, "text/html");
+
+        // Loại bỏ các script và style
+        const scripts = doc.getElementsByTagName("script");
+        const styles = doc.getElementsByTagName("style");
+        [...scripts, ...styles].forEach((element) => element.remove());
+
+        // Thu thập các node cần dịch
+        const translatableNodes = this.getTranslatableHTMLNodes(doc.body);
+        const chunks = this.createHTMLChunks(translatableNodes);
+
+        // Hiển thị trạng thái
+        this.translator.ui.showTranslatingStatus();
+
+        // Dịch từng chunk
+        for (const chunk of chunks) {
+          const textsToTranslate = chunk.nodes.map((node) => ({
+            text: node.textContent.trim(),
+            type: node.nodeType,
+            isAttribute: node.isAttribute,
+            attributeName: node.attributeName,
+          }));
+
+          const prompt = `Dịch các đoạn văn bản sau sang tiếng Việt, giữ nguyên format và ý nghĩa:
+                ${textsToTranslate.map((item) => item.text).join("\n---\n")}`;
+
+          const translation = await this.translator.api.request(prompt);
+          const translatedTexts = translation.split("\n---\n");
+
+          // Cập nhật nội dung đã dịch
+          chunk.nodes.forEach((node, index) => {
+            if (node.isAttribute) {
+              node.ownerElement.setAttribute(
+                node.attributeName,
+                translatedTexts[index].trim(),
+              );
+            } else {
+              node.textContent = translatedTexts[index].trim();
+            }
+          });
+        }
+
+        // Trả về HTML đã dịch
+        return doc.documentElement.outerHTML;
+      } catch (error) {
+        console.error("Lỗi dịch HTML:", error);
+        throw error;
+      } finally {
+        this.translator.ui.removeTranslatingStatus();
+      }
+    }
+
+    getTranslatableHTMLNodes(element) {
+      const translatableNodes = [];
+      const excludeSelectors = [
+        "script",
+        "style",
+        "noscript",
+        "code",
+        "pre",
+        ".notranslate",
+        '[translate="no"]',
+      ];
+
+      // Tìm tất cả text nodes
+      const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+          const parent = node.parentElement;
+          if (!parent) return NodeFilter.FILTER_REJECT;
+
+          // Kiểm tra các selector loại trừ
+          if (excludeSelectors.some((selector) => parent.matches?.(selector))) {
+            return NodeFilter.FILTER_REJECT;
+          }
+
+          // Chấp nhận node nếu có nội dung
+          return node.textContent.trim()
+            ? NodeFilter.FILTER_ACCEPT
+            : NodeFilter.FILTER_REJECT;
+        },
+      });
+
+      let node;
+      while ((node = walker.nextNode())) {
+        translatableNodes.push(node);
+      }
+
+      // Tìm các thuộc tính cần dịch
+      const elements = element.getElementsByTagName("*");
+      const translatableAttributes = ["title", "alt", "placeholder"];
+
+      for (const el of elements) {
+        for (const attr of translatableAttributes) {
+          if (el.hasAttribute(attr)) {
+            const value = el.getAttribute(attr);
+            if (value && value.trim()) {
+              const node = document.createTextNode(value);
+              node.isAttribute = true;
+              node.attributeName = attr;
+              node.ownerElement = el;
+              translatableNodes.push(node);
+            }
+          }
+        }
+      }
+
+      return translatableNodes;
+    }
+
+    createHTMLChunks(nodes, maxChunkSize = 1000) {
+      const chunks = [];
+      let currentChunk = { nodes: [], size: 0 };
+
+      for (const node of nodes) {
+        const textLength = node.textContent.length;
+
+        if (currentChunk.size + textLength > maxChunkSize) {
+          if (currentChunk.nodes.length > 0) {
+            chunks.push(currentChunk);
+          }
+          currentChunk = { nodes: [node], size: textLength };
+        } else {
+          currentChunk.nodes.push(node);
+          currentChunk.size += textLength;
+        }
+      }
+
+      if (currentChunk.nodes.length > 0) {
+        chunks.push(currentChunk);
+      }
+
+      return chunks;
+    }
+    async loadPDFJS() {
+      if (!this.pdfLoaded) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = window.pdfjsWorker;
+        this.pdfLoaded = true;
+      }
+    }
+    async translatePDF(file) {
+      try {
+        await this.loadPDFJS();
+
+        const arrayBuffer = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+        let translatedContent = [];
+        const totalPages = pdf.numPages;
+
+        // Tạo canvas để render PDF
+        const canvas = document.createElement("canvas");
+        const ctx = canvas.getContext("2d");
+
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+
+          // Lấy viewport
+          const viewport = page.getViewport({ scale: 2.0 }); // Scale 2.0 để chất lượng ảnh tốt hơn
+
+          // Set canvas size
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
+
+          // Render page to canvas
+          await page.render({
+            canvasContext: ctx,
+            viewport: viewport,
+          }).promise;
+
+          // Convert canvas to image file
+          const imageBlob = await new Promise((resolve) => {
+            canvas.toBlob(resolve, "image/png");
+          });
+          const imageFile = new File([imageBlob], "page.png", {
+            type: "image/png",
+          });
+
+          // OCR trang PDF đã được convert sang ảnh
+          try {
+            // Sử dụng OCR từ translator instance
+            const ocrResult = await this.translator.ocr.processImage(imageFile);
+
+            // Nếu có kết quả OCR, thực hiện dịch
+            if (ocrResult && ocrResult.trim()) {
+              const translated = await this.translator.api.request(
+                `Dịch sang tiếng Việt, giữ nguyên format và ý nghĩa: "${ocrResult}"`,
+              );
+
+              translatedContent.push({
+                pageNum,
+                original: ocrResult,
+                translated: translated,
+              });
+            } else {
+              throw new Error("Không nhận diện được text");
+            }
+          } catch (error) {
+            console.error(`Error processing page ${pageNum}:`, error);
+            translatedContent.push({
+              pageNum,
+              original: `[OCR Error on page ${pageNum}: ${error.message}]`,
+              translated: `[Translation Error on page ${pageNum}: ${error.message}]`,
+            });
+          }
+
+          // Cập nhật tiến độ
+          this.translator.ui.updateProgress(
+            "Đang xử lý PDF",
+            Math.round((pageNum / totalPages) * 100),
+          );
+
+          // Clear canvas cho trang tiếp theo
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Cleanup
+        canvas.remove();
+
+        // Generate output HTML
+        return this.generateTranslatedPDF(translatedContent);
+      } catch (error) {
+        console.error("Lỗi xử lý PDF:", error);
+        throw error;
+      }
+    }
+
+    generateTranslatedPDF(translatedContent) {
+      const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        max-width: 900px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }
+                    .page {
+                        margin-bottom: 40px;
+                        padding: 20px;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                        page-break-after: always;
+                    }
+                    .page-number {
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        color: #666;
+                    }
+                    .content {
+                        margin-bottom: 20px;
+                    }
+                    .original {
+                        color: #666;
+                        margin-bottom: 20px;
+                        padding: 15px;
+                        background: #f5f5f5;
+                        border-radius: 5px;
+                        white-space: pre-wrap;
+                    }
+                    .translated {
+                        color: #000;
+                        padding: 15px;
+                        background: #fff;
+                        border: 1px solid #eee;
+                        border-radius: 5px;
+                        white-space: pre-wrap;
+                    }
+                    h3 {
+                        color: #333;
+                        margin: 10px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                ${translatedContent
+          .map(
+            (page) => `
+                    <div class="page">
+                        <div class="page-number">Trang ${page.pageNum}</div>
+                        <div class="content">
+                            <h3>Văn bản gốc:</h3>
+                            <div class="original">${page.original}</div>
+                            <h3>Bản dịch:</h3>
+                            <div class="translated">${page.translated}</div>
+                        </div>
+                    </div>
+                `,
+          )
+          .join("")}
+            </body>
+            </html>
+        `;
+
+      return new Blob([htmlContent], { type: "text/html" });
+    }
+
+    groupIntoParagraphs(textItems) {
+      let paragraphs = [];
+      let currentParagraph = {
+        text: "",
+        format: {},
+        type: "text",
+      };
+
+      for (let i = 0; i < textItems.length; i++) {
+        const item = textItems[i];
+        const nextItem = textItems[i + 1];
+
+        // Xác định loại nội dung
+        if (item.fontSize > 20) {
+          currentParagraph.type = "heading";
+        } else if (item.text.match(/^\d+\./)) {
+          currentParagraph.type = "list-item";
+        }
+
+        // Thêm text vào paragraph hiện tại
+        currentParagraph.text += item.text;
+
+        // Lưu thông tin định dạng
+        currentParagraph.format = {
+          fontSize: item.fontSize,
+          fontFamily: item.fontFamily,
+          isAnnotation: item.type === "annotation",
+        };
+
+        // Kiểm tra điều kiện kết thúc paragraph
+        const shouldEndParagraph =
+          !nextItem || // Hết items
+          Math.abs(nextItem.y - item.y) > 1.5 * item.fontSize || // Khoảng cách dọc lớn
+          (nextItem.fontSize > 20 && item.fontSize <= 20) || // Chuyển từ text thường sang heading
+          item.text.endsWith(".") || // Kết thúc câu
+          item.text.endsWith("?") ||
+          item.text.endsWith("!");
+
+        if (shouldEndParagraph) {
+          if (currentParagraph.text.trim()) {
+            paragraphs.push({ ...currentParagraph });
+          }
+          currentParagraph = {
+            text: "",
+            format: {},
+            type: "text",
+          };
+        } else {
+          currentParagraph.text += " ";
+        }
+      }
+
+      return paragraphs;
+    }
+
+    generateEnhancedTranslatedPDF(translatedContent) {
+      const htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        max-width: 900px;
+                        margin: 0 auto;
+                        padding: 20px;
+                    }
+                    .page {
+                        margin-bottom: 40px;
+                        padding: 20px;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                    }
+                    .page-number {
+                        font-size: 18px;
+                        font-weight: bold;
+                        margin-bottom: 20px;
+                        color: #666;
+                    }
+                    .paragraph {
+                        margin-bottom: 20px;
+                        padding: 15px;
+                        background: #f9f9f9;
+                        border-radius: 5px;
+                    }
+                    .original {
+                        color: #666;
+                        margin-bottom: 10px;
+                        padding-bottom: 10px;
+                        border-bottom: 1px solid #eee;
+                    }
+                    .translated {
+                        color: #000;
+                    }
+                    .heading {
+                        font-size: 1.5em;
+                        font-weight: bold;
+                        color: #2c3e50;
+                    }
+                    .list-item {
+                        margin-left: 20px;
+                    }
+                    .annotation {
+                        font-style: italic;
+                        color: #666;
+                    }
+                    @media print {
+                        .page {
+                            page-break-after: always;
+                        }
+                    }
+                </style>
+            </head>
+            <body>
+                ${translatedContent
+          .map(
+            (page) => `
+                    <div class="page">
+                        <div class="page-number">Trang ${page.pageNum}</div>
+                        ${page.content
+                .map(
+                  (para) => `
+                            <div class="paragraph ${para.type}">
+                                <div class="original">${para.original}</div>
+                                <div class="translated">${para.translated}</div>
+                            </div>
+                        `,
+                )
+                .join("")}
+                    </div>
+                `,
+          )
+          .join("")}
+            </body>
+            </html>
+        `;
+
+      return new Blob([htmlContent], { type: "text/html" });
+    }
+
+    splitIntoChunks(text, maxLength = 1000) {
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const chunks = [];
+      let currentChunk = "";
+
+      for (const sentence of sentences) {
+        if ((currentChunk + sentence).length > maxLength && currentChunk) {
+          chunks.push(currentChunk.trim());
+          currentChunk = "";
+        }
+        currentChunk += sentence + " ";
+      }
+
+      if (currentChunk) {
+        chunks.push(currentChunk.trim());
+      }
+
+      return chunks;
     }
     rateLimiter = {
       queue: [],
@@ -2353,15 +3090,15 @@
           this.queue.shift();
         }
         this.queue.push(now);
-      }
+      },
     };
     updateUI(menuText, buttonText) {
       const toolsContainer = document.querySelector(
-        ".translator-tools-container"
+        ".translator-tools-container",
       );
       if (toolsContainer) {
         const menuItem = toolsContainer.querySelector(
-          '[data-type="pageTranslate"]'
+          '[data-type="pageTranslate"]',
         );
         if (menuItem) {
           const itemText = menuItem.querySelector(".item-text");
@@ -2441,8 +3178,8 @@
               parent = parent.parentElement;
             }
             return NodeFilter.FILTER_ACCEPT;
-          }
-        }
+          },
+        },
       );
       const nodes = [];
       let node;
@@ -2485,7 +3222,7 @@
     async generateKey(imageData) {
       const hashBuffer = await crypto.subtle.digest(
         "SHA-256",
-        new TextEncoder().encode(imageData)
+        new TextEncoder().encode(imageData),
       );
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -2505,7 +3242,7 @@
       }
       this.cache.set(key, {
         result: ocrResult,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
     async get(imageData) {
@@ -2538,7 +3275,7 @@
     async generateKey(fileData) {
       const hashBuffer = await crypto.subtle.digest(
         "SHA-256",
-        new TextEncoder().encode(fileData)
+        new TextEncoder().encode(fileData),
       );
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -2558,7 +3295,7 @@
       }
       this.cache.set(key, {
         translation,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
     async get(fileData) {
@@ -2606,7 +3343,7 @@
       }
       this.cache.set(key, {
         translation,
-        timestamp: Date.now()
+        timestamp: Date.now(),
       });
     }
     get(text, isAdvanced) {
@@ -2628,6 +3365,67 @@
       this.cache.clear();
       this.accessOrder = [];
     }
+    optimizeStorage() {
+      if (this.cache.size > this.maxSize * 0.9) {
+        const itemsToKeep = Math.floor(this.maxSize * 0.7);
+        const sortedItems = [...this.accessOrder].slice(-itemsToKeep);
+
+        const tempCache = new Map();
+        sortedItems.forEach((key) => {
+          if (this.cache.has(key)) {
+            tempCache.set(key, this.cache.get(key));
+          }
+        });
+
+        this.cache = tempCache;
+        this.accessOrder = sortedItems;
+      }
+    }
+
+    async initDB() {
+      if (!window.indexedDB) {
+        console.warn("IndexedDB not supported");
+        return;
+      }
+
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open("translatorCache", 1);
+
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result);
+
+        request.onupgradeneeded = (event) => {
+          const db = event.target.result;
+          if (!db.objectStoreNames.contains("translations")) {
+            db.createObjectStore("translations", { keyPath: "id" });
+          }
+        };
+      });
+    }
+
+    async saveToIndexedDB(key, value) {
+      const db = await this.initDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["translations"], "readwrite");
+        const store = transaction.objectStore("translations");
+        const request = store.put({ id: key, value, timestamp: Date.now() });
+
+        request.onsuccess = () => resolve();
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async loadFromIndexedDB(key) {
+      const db = await this.initDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["translations"], "readonly");
+        const store = transaction.objectStore("translations");
+        const request = store.get(key);
+
+        request.onsuccess = () => resolve(request.result?.value);
+        request.onerror = () => reject(request.error);
+      });
+    }
   }
   class APIKeyManager {
     constructor(settings) {
@@ -2642,7 +3440,7 @@
       if (!key) return;
       this.failedKeys.set(key, {
         timestamp: Date.now(),
-        failures: (this.failedKeys.get(key)?.failures || 0) + 1
+        failures: (this.failedKeys.get(key)?.failures || 0) + 1,
       });
       if (this.activeKeys.has(key)) {
         this.activeKeys.delete(key);
@@ -2703,21 +3501,25 @@
     async executeWithMultipleKeys(
       promiseGenerator,
       provider,
-      maxConcurrent = 3
+      maxConcurrent = 3,
     ) {
       const availableKeys = this.getAvailableKeys(provider);
       if (!availableKeys || availableKeys.length === 0) {
         throw new Error("Không có API key khả dụng");
       }
+
       const errors = [];
-      for (const key of availableKeys) {
+      const promises = [];
+      let currentKeyIndex = 0;
+
+      const processNext = async () => {
+        if (currentKeyIndex >= availableKeys.length) return null;
+        const key = availableKeys[currentKeyIndex++];
+
         try {
           const result = await this.useKey(key, () => promiseGenerator(key));
-          if (result) {
-            return [result];
-          }
+          if (result) return result;
         } catch (error) {
-          console.error(`Key ${key} failed:`, error);
           errors.push({ key, error });
           if (
             error.message.includes("API key not valid") ||
@@ -2725,19 +3527,32 @@
           ) {
             this.markKeyAsFailed(key);
           }
-          continue;
+          return processNext();
         }
+      };
+
+      // Chạy nhiều promises song song
+      for (let i = 0; i < Math.min(maxConcurrent, availableKeys.length); i++) {
+        promises.push(processNext());
       }
+
+      const results = await Promise.allSettled(promises);
+      const successResults = results
+        .filter((r) => r.status === "fulfilled" && r.value)
+        .map((r) => r.value);
+
+      if (successResults.length > 0) {
+        return successResults;
+      }
+
       throw new Error(
-        `Tất cả API key đều thất bại: ${errors
-          .map((e) => e.error.message)
-          .join(", ")}`
+        `Tất cả API key đều thất bại: ${errors.map((e) => e.error.message).join(", ")}`,
       );
     }
     markKeyAsFailed(key) {
       this.failedKeys.set(key, {
         timestamp: Date.now(),
-        failures: (this.failedKeys.get(key)?.failures || 0) + 1
+        failures: (this.failedKeys.get(key)?.failures || 0) + 1,
       });
     }
     setupKeyRotation() {
@@ -2757,6 +3572,7 @@
       this.getSettings = getSettings;
       this.keyManager = new APIKeyManager(getSettings());
       this.currentProvider = getSettings().apiProvider;
+      this.networkOptimizer = new NetworkOptimizer();
     }
     async request(prompt) {
       const provider = this.config.providers[this.currentProvider];
@@ -2769,7 +3585,7 @@
         try {
           const key = await this.keyManager.getRandomKey(this.currentProvider);
           const response = await this.keyManager.useKey(key, () =>
-            this.makeRequest(provider, prompt, key)
+            this.makeRequest(provider, prompt, key),
           );
           return provider.responseParser(response);
         } catch (error) {
@@ -2780,7 +3596,7 @@
             continue;
           }
           await new Promise((resolve) =>
-            setTimeout(resolve, this.config.retryDelay * Math.pow(2, attempts))
+            setTimeout(resolve, this.config.retryDelay * Math.pow(2, attempts)),
           );
         }
       }
@@ -2795,7 +3611,7 @@
           const response = await this.makeRequest(
             this.config.providers[this.currentProvider],
             prompt,
-            key
+            key,
           );
           results.push(response);
         }
@@ -2812,14 +3628,14 @@
           data: JSON.stringify({
             contents: [
               {
-                parts: [{ text: prompt }]
-              }
+                parts: [{ text: prompt }],
+              },
             ],
             generationConfig: {
               temperature: this.getSettings().mediaOptions.temperature,
               topP: this.getSettings().mediaOptions.topP,
-              topK: this.getSettings().mediaOptions.topK
-            }
+              topK: this.getSettings().mediaOptions.topK,
+            },
           }),
           onload: (response) => {
             if (response.status === 200) {
@@ -2843,7 +3659,7 @@
               }
             }
           },
-          onerror: (error) => reject(error)
+          onerror: (error) => reject(error),
         });
       });
     }
@@ -2869,24 +3685,52 @@
       this.ignoreNextSelectionChange = false;
       this.touchCount = 0;
       this.currentTranslateButton = null;
-      // Khởi tạo trạng thái tools
-      if (localStorage.getItem("translatorToolsEnabled") === null) {
-        localStorage.setItem("translatorToolsEnabled", "true");
-      }
       // Khởi tạo các managers
+      this.mobileOptimizer = new MobileOptimizer(this);
       this.ss = new UserSettings(translator);
       this.ocr = new OCRManager(translator);
       this.media = new MediaManager(translator);
       this.page = new PageTranslator(translator);
+      // Khởi tạo trạng thái tools
+      const settings = this.translator.userSettings.settings;
+      const toolsEnabled = settings.translatorToolsEnabled?.enabled;
+      if (localStorage.getItem("translatorToolsEnabled") === null) {
+        localStorage.setItem("translatorToolsEnabled", toolsEnabled.toString());
+      }
       // Bind các methods
       this.handleSettingsShortcut = this.handleSettingsShortcut.bind(this);
-      this.handleTranslationShortcuts = this.handleTranslationShortcuts.bind(this);
-      this.handleTranslateButtonClick = this.handleTranslateButtonClick.bind(this);
+      this.handleTranslationShortcuts =
+        this.handleTranslationShortcuts.bind(this);
+      this.handleTranslateButtonClick =
+        this.handleTranslateButtonClick.bind(this);
       this.setupClickHandlers = this.setupClickHandlers.bind(this);
       this.handleTextSelection = this.handleTextSelection.bind(this);
       this.showTranslatingStatus = this.showTranslatingStatus.bind(this);
       this.removeTranslatingStatus = this.removeTranslatingStatus.bind(this);
       this.resetState = this.resetState.bind(this);
+      GM_addStyle(`
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .processing-spinner {
+        width: 30px;
+        height: 30px;
+        border: 3px solid rgba(255,255,255,0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin: 0 auto 10px auto;
+    }
+    .processing-message {
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .processing-progress {
+        font-size: 12px;
+        opacity: 0.8;
+    }
+`);
       // Gán các listeners
       this.settingsShortcutListener = this.handleSettingsShortcut;
       this.translationShortcutListener = this.handleTranslationShortcuts;
@@ -2901,18 +3745,28 @@
       this.setupEventListeners();
       // Setup page translation
       if (document.readyState === "complete") {
-        if (this.translator.userSettings.settings.pageTranslation.autoTranslate) {
+        if (
+          this.translator.userSettings.settings.pageTranslation.autoTranslate
+        ) {
           this.page.checkAndTranslate();
         }
-        if (this.translator.userSettings.settings.pageTranslation.showInitialButton) {
+        if (
+          this.translator.userSettings.settings.pageTranslation
+            .showInitialButton
+        ) {
           this.setupQuickTranslateButton();
         }
       } else {
         window.addEventListener("load", () => {
-          if (this.translator.userSettings.settings.pageTranslation.autoTranslate) {
+          if (
+            this.translator.userSettings.settings.pageTranslation.autoTranslate
+          ) {
             this.page.checkAndTranslate();
           }
-          if (this.translator.userSettings.settings.pageTranslation.showInitialButton) {
+          if (
+            this.translator.userSettings.settings.pageTranslation
+              .showInitialButton
+          ) {
             this.setupQuickTranslateButton();
           }
         });
@@ -2925,7 +3779,7 @@
         this.translator.userSettings.settings.displayOptions;
       Object.assign(div.style, {
         ...CONFIG.STYLES.translation,
-        fontSize: displayOptions.fontSize
+        fontSize: displayOptions.fontSize,
       });
       if (displayOptions.showOriginalText && originalText) {
         div.innerHTML = `
@@ -2949,7 +3803,7 @@
         fontSize: "14px",
         fontWeight: "bold",
         padding: "4px 8px" /* Tăng kích thước */,
-        lineHeight: "14px"
+        lineHeight: "14px",
       });
       button.onclick = () => button.parentElement.remove();
       return button;
@@ -2966,7 +3820,7 @@
       }
       if (
         lastSelectedParagraph.nextElementSibling?.classList.contains(
-          "translation-div"
+          "translation-div",
         )
       ) {
         return;
@@ -3000,9 +3854,7 @@
       const popup = document.createElement("div");
       popup.classList.add("draggable");
       const dragHandleBackground =
-        theme.mode === "dark"
-          ? "#1a1a1a"
-          : "#2c3e50";
+        theme.mode === "dark" ? "#1a1a1a" : "#2c3e50";
       const popupStyle = {
         ...CONFIG.STYLES.popup,
         backgroundColor: theme.background,
@@ -3014,7 +3866,7 @@
         padding: "0",
         overflow: "hidden",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       };
       Object.assign(popup.style, popupStyle);
       const dragHandle = document.createElement("div");
@@ -3026,14 +3878,14 @@
         padding: "12px 15px",
         borderTopLeftRadius: "15px",
         borderTopRightRadius: "15px",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.12)"
+        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
       });
       const titleSpan = document.createElement("span");
       titleSpan.textContent = title;
       Object.assign(titleSpan.style, {
         fontWeight: "bold",
         color: "#ffffff",
-        fontSize: "15px"
+        fontSize: "15px",
       });
       const closeButton = document.createElement("span");
       closeButton.innerHTML = "×";
@@ -3050,18 +3902,18 @@
         justifyContent: "center",
         width: "30px",
         height: "30px",
-        borderRadius: "50%"
+        borderRadius: "50%",
       });
       closeButton.onmouseover = () => {
         Object.assign(closeButton.style, {
           opacity: "1",
-          backgroundColor: "#ff4444"
+          backgroundColor: "#ff4444",
         });
       };
       closeButton.onmouseout = () => {
         Object.assign(closeButton.style, {
           opacity: "0.8",
-          backgroundColor: "transparent"
+          backgroundColor: "transparent",
         });
       };
       closeButton.onclick = () => popup.remove();
@@ -3072,7 +3924,7 @@
         padding: "15px 20px",
         maxHeight: "70vh",
         overflowY: "auto",
-        overflowX: "hidden"
+        overflowX: "hidden",
       });
       const scrollbarStyle = document.createElement("style");
       scrollbarStyle.textContent = `
@@ -3098,7 +3950,7 @@
       Object.assign(textContainer.style, {
         display: "flex",
         flexDirection: "column",
-        gap: "15px"
+        gap: "15px",
       });
       if (displayOptions.showOriginalText && originalText) {
         const originalContainer = document.createElement("div");
@@ -3109,7 +3961,7 @@
             }`,
           borderRadius: "8px",
           border: `1px solid ${theme.border}`,
-          wordBreak: "break-word"
+          wordBreak: "break-word",
         });
         originalContainer.innerHTML = `
       <div style="font-weight: 500; margin-bottom: 5px; color: ${theme.title};">Văn bản gốc:</div>
@@ -3124,7 +3976,7 @@
         backgroundColor: `${theme.background === "#222" ? "#333" : "#f5f5f5"}`,
         borderRadius: "8px",
         border: `1px solid ${theme.border}`,
-        wordBreak: "break-word"
+        wordBreak: "break-word",
       });
       translationContainer.innerHTML = `
     <div style="font-weight: 500; margin-bottom: 5px; color: ${theme.title
@@ -3139,7 +3991,7 @@
         ...popupStyle,
         maxHeight: "85vh",
         display: "flex",
-        flexDirection: "column"
+        flexDirection: "column",
       });
       this.makeDraggable(popup, dragHandle);
       document.body.appendChild(popup);
@@ -3211,7 +4063,7 @@
       Object.assign(button.style, {
         ...CONFIG.STYLES.button,
         backgroundColor: theme.button.translate.background,
-        color: theme.button.translate.text
+        color: theme.button.translate.text,
       });
       const rect = selection.getRangeAt(0).getBoundingClientRect();
       button.style.top = `${rect.bottom + 20}px`;
@@ -3250,7 +4102,7 @@
               selectedText,
               targetElement,
               false,
-              true
+              true,
             );
             break;
           case "advanced":
@@ -3410,7 +4262,10 @@
         const touchOptions = this.translator.userSettings.settings.touchOptions;
         if (!touchOptions?.enabled) return;
         const target = e.target;
-        if (target.closest(".translation-div") || target.closest(".draggable")) {
+        if (
+          target.closest(".translation-div") ||
+          target.closest(".draggable")
+        ) {
           return;
         }
         if (touchTimer) {
@@ -3427,7 +4282,10 @@
                 const selectedText = selection?.toString().trim();
                 if (selectedText) {
                   e.preventDefault();
-                  await this.handleTranslateButtonClick(selection, twoFingersType);
+                  await this.handleTranslateButtonClick(
+                    selection,
+                    twoFingersType,
+                  );
                 }
               }
               break;
@@ -3438,13 +4296,17 @@
                 const selectedText = selection?.toString().trim();
                 if (selectedText) {
                   e.preventDefault();
-                  await this.handleTranslateButtonClick(selection, threeFingersType);
+                  await this.handleTranslateButtonClick(
+                    selection,
+                    threeFingersType,
+                  );
                 }
               }
               break;
             case 4:
               e.preventDefault();
-              const settingsUI = this.translator.userSettings.createSettingsUI();
+              const settingsUI =
+                this.translator.userSettings.createSettingsUI();
               document.body.appendChild(settingsUI);
               break;
             case 5:
@@ -3468,24 +4330,28 @@
         touchCount = 0;
       };
       document.addEventListener("touchstart", handleTouchStart.bind(this), {
-        passive: false
+        passive: false,
       });
       document.addEventListener("touchend", handleTouch.bind(this));
       document.addEventListener("touchcancel", handleTouch.bind(this));
     }
     toggleTranslatorTools() {
-      const currentState = localStorage.getItem("translatorToolsEnabled") === "true";
-      const newState = !currentState;
       if (this.isTogglingTools) return;
+
       this.isTogglingTools = true;
       try {
+        const currentState = localStorage.getItem("translatorToolsEnabled") === "true";
+        const newState = !currentState;
+        localStorage.setItem("translatorToolsEnabled", newState.toString());
+        const settings = this.translator.userSettings.settings;
+        settings.translatorToolsEnabled.enabled = newState;
+        this.translator.userSettings.saveSettings();
         this.removeToolsListeners();
         this.removeToolsContainer();
         this.removeAllProcessingIndicators();
         this.resetState();
-        const overlays = document.querySelectorAll('.translator-overlay');
-        overlays.forEach(overlay => overlay.remove());
-        localStorage.setItem("translatorToolsEnabled", newState.toString());
+        const overlays = document.querySelectorAll(".translator-overlay");
+        overlays.forEach((overlay) => overlay.remove());
         if (newState) {
           this.setupTranslatorTools();
         }
@@ -3495,7 +4361,7 @@
       } finally {
         setTimeout(() => {
           this.isTogglingTools = false;
-        }, 300);
+        }, 350);
       }
     }
     removeToolsListeners() {
@@ -3546,11 +4412,11 @@
         const result = await this.page.translatePage();
         if (result.success) {
           const toolsContainer = document.querySelector(
-            ".translator-tools-container"
+            ".translator-tools-container",
           );
           if (toolsContainer) {
             const menuItem = toolsContainer.querySelector(
-              '[data-type="pageTranslate"]'
+              '[data-type="pageTranslate"]',
             );
             if (menuItem) {
               const itemText = menuItem.querySelector(".item-text");
@@ -3562,7 +4428,7 @@
             }
           }
           const floatingButton = document.querySelector(
-            ".page-translate-button"
+            ".page-translate-button",
           );
           if (floatingButton) {
             floatingButton.innerHTML = this.page.isTranslated
@@ -3618,11 +4484,11 @@
           if (result.success) {
             this.showNotification(result.message, "success");
             const toolsContainer = document.querySelector(
-              ".translator-tools-container"
+              ".translator-tools-container",
             );
             if (toolsContainer) {
               const menuItem = toolsContainer.querySelector(
-                '.translator-tools-item[data-type="pageTranslate"]'
+                '.translator-tools-item[data-type="pageTranslate"]',
               );
               if (menuItem) {
                 menuItem.querySelector(".item-text").textContent = this.page
@@ -3733,7 +4599,7 @@
               const result = await this.page.translatePage();
               if (result.success) {
                 const menuItem = dropdown.querySelector(
-                  '[data-type="pageTranslate"]'
+                  '[data-type="pageTranslate"]',
                 );
                 if (menuItem) {
                   const itemText = menuItem.querySelector(".item-text");
@@ -3753,7 +4619,7 @@
             } finally {
               this.removeTranslatingStatus();
             }
-          }
+          },
         });
       }
       if (settings.ocrOptions?.enabled) {
@@ -3761,7 +4627,7 @@
           {
             icon: "📷",
             text: "Dịch Ảnh",
-            handler: () => ocrInput.click()
+            handler: () => ocrInput.click(),
           },
           {
             icon: "📸",
@@ -3787,7 +4653,7 @@
               } finally {
                 this.removeTranslatingStatus();
               }
-            }
+            },
           },
           {
             icon: "🖼️",
@@ -3795,19 +4661,95 @@
             handler: () => {
               dropdown.style.display = "none";
               this.startWebImageOCR();
-            }
-          }
-        );
-      }
-      if (settings.mediaOptions?.enabled) {
-        menuItems.push(
-          {
-            icon: "🎵",
-            text: "Dịch Media",
-            handler: () => mediaInput.click()
+            },
           },
         );
       }
+      if (settings.mediaOptions?.enabled) {
+        menuItems.push({
+          icon: "🎵",
+          text: "Dịch Media",
+          handler: () => mediaInput.click(),
+        });
+      }
+      menuItems.push({
+        icon: "📄",
+        text: "Dịch File HTML",
+        handler: () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".html,.htm";
+          input.style.display = "none";
+
+          input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+              this.showTranslatingStatus();
+              const content = await this.readFileContent(file);
+              const translatedHTML = await this.page.translateHTML(content);
+
+              // Tạo và tải file đã dịch
+              const blob = new Blob([translatedHTML], { type: "text/html" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `translated_${file.name}`;
+              a.click();
+              URL.revokeObjectURL(url);
+
+              this.showNotification("Dịch file HTML thành công", "success");
+            } catch (error) {
+              console.error("Lỗi dịch file HTML:", error);
+              this.showNotification(error.message, "error");
+            } finally {
+              this.removeTranslatingStatus();
+              input.value = "";
+            }
+          };
+
+          input.click();
+        },
+      });
+      menuItems.push({
+        icon: "📑",
+        text: "Dịch File PDF",
+        handler: () => {
+          const input = document.createElement("input");
+          input.type = "file";
+          input.accept = ".pdf";
+          input.style.display = "none";
+
+          input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+              this.showLoadingStatus("Đang xử lý PDF...");
+              const translatedBlob = await this.page.translatePDF(file);
+
+              // Tải file đã dịch
+              const url = URL.createObjectURL(translatedBlob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `translated_${file.name.replace(".pdf", ".html")}`;
+              a.click();
+              URL.revokeObjectURL(url);
+
+              this.showNotification("Dịch PDF thành công", "success");
+            } catch (error) {
+              console.error("Lỗi dịch PDF:", error);
+              this.showNotification(error.message, "error");
+            } finally {
+              this.removeLoadingStatus();
+              input.value = "";
+            }
+          };
+
+          input.click();
+        },
+      });
       menuItems.forEach((item) => {
         const menuItem = document.createElement("div");
         menuItem.className = "translator-tools-item";
@@ -4012,6 +4954,101 @@
   }
 `);
     }
+    showProcessingStatus(message) {
+      this.removeProcessingStatus();
+      const status = document.createElement("div");
+      status.className = "processing-status";
+      status.innerHTML = `
+            <div class="processing-spinner"></div>
+            <div class="processing-message">${message}</div>
+            <div class="processing-progress">0%</div>
+        `;
+      Object.assign(status.style, {
+        position: "fixed",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
+        background: "rgba(0, 0, 0, 0.8)",
+        color: "white",
+        padding: "20px",
+        borderRadius: "10px",
+        zIndex: "2147483647",
+        textAlign: "center",
+        minWidth: "200px",
+      });
+      document.body.appendChild(status);
+      this.processingStatus = status;
+    }
+
+    updateProcessingStatus(message, progress) {
+      if (this.processingStatus) {
+        const messageEl = this.processingStatus.querySelector(
+          ".processing-message",
+        );
+        const progressEl = this.processingStatus.querySelector(
+          ".processing-progress",
+        );
+        if (messageEl) messageEl.textContent = message;
+        if (progressEl) progressEl.textContent = `${progress}%`;
+      }
+    }
+
+    removeProcessingStatus() {
+      if (this.processingStatus) {
+        this.processingStatus.remove();
+        this.processingStatus = null;
+      }
+    }
+    readFileContent(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error("Không thể đọc file"));
+        reader.readAsText(file);
+      });
+    }
+
+    showLoadingStatus(message) {
+      // Tạo loading indicator
+      const loading = document.createElement("div");
+      loading.id = "pdf-loading-status";
+      loading.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            z-index: 9999;
+        `;
+      loading.innerHTML = `
+            <div style="text-align: center;">
+                <div class="spinner"></div>
+                <div>${message}</div>
+            </div>
+        `;
+      document.body.appendChild(loading);
+    }
+
+    removeLoadingStatus() {
+      const loading = document.getElementById("pdf-loading-status");
+      if (loading) loading.remove();
+    }
+
+    updateProgress(message, percent) {
+      const loading = document.getElementById("pdf-loading-status");
+      if (loading) {
+        loading.innerHTML = `
+                <div style="text-align: center;">
+                    <div class="spinner"></div>
+                    <div>${message}</div>
+                    <div>${percent}%</div>
+                </div>
+            `;
+      }
+    }
     getTranslatableNodes(element) {
       const excludeSelectors = [
         "script",
@@ -4021,13 +5058,13 @@
         ".translator-tools-container",
         ".translator-notification",
         ".center-translate-status",
-        ".page-translate-button"
+        ".page-translate-button",
       ];
       const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT, {
         acceptNode: function(node) {
           if (
             excludeSelectors.some((selector) =>
-              node.parentElement?.matches?.(selector)
+              node.parentElement?.matches?.(selector),
             )
           ) {
             return NodeFilter.FILTER_REJECT;
@@ -4035,7 +5072,7 @@
           return node.textContent.trim()
             ? NodeFilter.FILTER_ACCEPT
             : NodeFilter.FILTER_REJECT;
-        }
+        },
       });
       const nodes = [];
       let node;
@@ -4187,10 +5224,10 @@
             const ctx = canvas.getContext("2d");
             ctx.drawImage(e.target, 0, 0);
             const blob = await new Promise((resolve) =>
-              canvas.toBlob(resolve, "image/png")
+              canvas.toBlob(resolve, "image/png"),
             );
             const file = new File([blob], "web-image.png", {
-              type: "image/png"
+              type: "image/png",
             });
             const result = await this.ocr.processImage(file);
             this.displayPopup(result, null, "OCR Web Image");
@@ -4216,7 +5253,7 @@
         overlay,
         guide,
         cancelBtn,
-        style
+        style,
       };
     }
     startWebMediaTranslation() {
@@ -4324,7 +5361,7 @@
           ".jwplayer",
           '[class*="player"]',
           '[class*="audio"]',
-          '[class*="video"]'
+          '[class*="video"]',
         ];
         for (const selector of containers) {
           const container = target.closest(selector);
@@ -4338,12 +5375,12 @@
           '[class*="play"]',
           '[class*="pause"]',
           '[class*="control"]',
-          '[role="button"]'
+          '[role="button"]',
         ];
         for (const selector of controlSelectors) {
           if (target.matches(selector)) {
             const container = target.closest(
-              '[class*="player"],[class*="audio"],[class*="video"]'
+              '[class*="player"],[class*="audio"],[class*="video"]',
             );
             if (container) {
               const media = container.querySelector("audio, video");
@@ -4364,7 +5401,7 @@
           borderRadius: "5px",
           padding: "5px",
           boxShadow: "0 2px 5px rgba(0,0,0,0.2)",
-          zIndex: "2147483647"
+          zIndex: "2147483647",
         });
         const options = [
           {
@@ -4376,7 +5413,7 @@
               } catch (error) {
                 this.showNotification(error.message, "error");
               }
-            }
+            },
           },
         ];
         options.forEach((option) => {
@@ -4385,7 +5422,7 @@
             padding: "8px 15px",
             cursor: "pointer",
             borderRadius: "3px",
-            whiteSpace: "nowrap"
+            whiteSpace: "nowrap",
           });
           div.onmouseover = () => (div.style.backgroundColor = "#f5f5f5");
           div.onmouseout = () => (div.style.backgroundColor = "transparent");
@@ -4415,7 +5452,7 @@
         overlay,
         guide,
         cancelBtn,
-        style
+        style,
       };
     }
     async handleAudioFile(mediaElement) {
@@ -4430,22 +5467,22 @@
               parts: [
                 {
                   audio: {
-                    data: base64Audio
-                  }
-                }
-              ]
-            }
+                    data: base64Audio,
+                  },
+                },
+              ],
+            },
           ],
           generationConfig: {
             temperature: mediaSettings.temperature,
             topP: mediaSettings.topP,
             topK: mediaSettings.topK,
-            maxOutputTokens: 2048
-          }
+            maxOutputTokens: 2048,
+          },
         };
         const response = await this.translator.api.request(
           requestBody,
-          "gemini-2.0-flash-lite"
+          "gemini-2.0-flash-lite",
         );
         if (response) {
           this.displayTranslation(response);
@@ -4480,23 +5517,23 @@
         firefox: {
           width: 270,
           height: 340,
-          itemHeight: 34
+          itemHeight: 34,
         },
         chrome: {
           width: 250,
           height: 320,
-          itemHeight: 32
+          itemHeight: 32,
         },
         safari: {
           width: 240,
           height: 300,
-          itemHeight: 30
+          itemHeight: 30,
         },
         edge: {
           width: 260,
           height: 330,
-          itemHeight: 33
-        }
+          itemHeight: 33,
+        },
       };
       let size;
       if (browser.includes("Firefox")) {
@@ -4512,7 +5549,7 @@
       return {
         width: Math.round(size.width * dpi),
         height: Math.round(size.height * dpi),
-        itemHeight: Math.round(size.itemHeight * dpi)
+        itemHeight: Math.round(size.itemHeight * dpi),
       };
     }
     setupContextMenu() {
@@ -4522,7 +5559,7 @@
         const selectedText = selection.toString().trim();
         if (selectedText) {
           const oldMenus = document.querySelectorAll(
-            ".translator-context-menu"
+            ".translator-context-menu",
           );
           oldMenus.forEach((menu) => menu.remove());
           const contextMenu = document.createElement("div");
@@ -4530,7 +5567,7 @@
           const menuItems = [
             { text: "Dịch nhanh", action: "quick" },
             { text: "Dịch popup", action: "popup" },
-            { text: "Dịch nâng cao", action: "advanced" }
+            { text: "Dịch nâng cao", action: "advanced" },
           ];
           const range = selection.getRangeAt(0).cloneRange();
           menuItems.forEach((item) => {
@@ -4669,17 +5706,17 @@
         document.removeEventListener(
           "mouseover",
           this.webMediaListeners.hover,
-          true
+          true,
         );
         document.removeEventListener(
           "mouseout",
           this.webMediaListeners.leave,
-          true
+          true,
         );
         document.removeEventListener(
           "click",
           this.webMediaListeners.click,
-          true
+          true,
         );
         this.webMediaListeners.overlay?.remove();
         this.webMediaListeners.guide?.remove();
@@ -4698,17 +5735,17 @@
         document.removeEventListener(
           "mouseover",
           this.webImageListeners.hover,
-          true
+          true,
         );
         document.removeEventListener(
           "mouseout",
           this.webImageListeners.leave,
-          true
+          true,
         );
         document.removeEventListener(
           "click",
           this.webImageListeners.click,
-          true
+          true,
         );
         this.webImageListeners.overlay?.remove();
         this.webImageListeners.guide?.remove();
@@ -4739,7 +5776,7 @@
       const targetElement = selection.anchorNode?.parentElement;
       if (!targetElement) return;
       const shortcuts = this.translator.userSettings.settings.shortcuts;
-      if ((e.altKey || e.metaKey)) {
+      if (e.altKey || e.metaKey) {
         let translateType = null;
         if (e.key.toLowerCase() === shortcuts.pageTranslate.key.toLowerCase()) {
           e.preventDefault();
@@ -4773,7 +5810,7 @@
       } else {
         document.removeEventListener(
           "keydown",
-          this.translationShortcutListener
+          this.translationShortcutListener,
         );
       }
     }
@@ -4782,13 +5819,13 @@
         document.addEventListener("mouseup", this.mouseupButtonListener);
         document.addEventListener(
           "selectionchange",
-          this.selectionButtonListener
+          this.selectionButtonListener,
         );
       } else {
         document.removeEventListener("mouseup", this.mouseupButtonListener);
         document.removeEventListener(
           "selectionchange",
-          this.selectionButtonListener
+          this.selectionButtonListener,
         );
       }
     }
@@ -4851,7 +5888,7 @@
         }
         this.cache = new TranslationCache(
           newSettings.cacheOptions.text.maxSize,
-          newSettings.cacheOptions.text.expirationTime
+          newSettings.cacheOptions.text.expirationTime,
         );
         this.cache.clear();
         if (this.ocr?.imageCache) {
@@ -4862,7 +5899,7 @@
           currentProvider: newSettings.apiProvider,
           apiKey: newSettings.apiKey,
           maxRetries: CONFIG.API.maxRetries,
-          retryDelay: CONFIG.API.retryDelay
+          retryDelay: CONFIG.API.retryDelay,
         };
         this.api = new APIManager(apiConfig);
         if (
@@ -4888,7 +5925,7 @@
         info: "#4a90e2",
         success: "#28a745",
         warning: "#ffc107",
-        error: "#dc3545"
+        error: "#dc3545",
       };
       const backgroundColor = colors[type] || colors.info;
       const textColor = type === "warning" ? "#000" : "#fff";
@@ -4905,7 +5942,7 @@
         animation: "fadeInOut 2s ease",
         fontFamily: "Arial, sans-serif",
         fontSize: "14px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
+        boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
       });
       notification.textContent = message;
       document.body.appendChild(notification);
@@ -4937,7 +5974,7 @@
     }
     removeAllProcessingIndicators() {
       const indicators = document.querySelectorAll(
-        ".translator-processing-indicator"
+        ".translator-processing-indicator",
       );
       indicators.forEach((indicator) => {
         if (indicator && indicator.parentNode) {
@@ -4953,48 +5990,120 @@
       const apiConfig = {
         ...CONFIG.API,
         currentProvider: this.userSettings.getSetting("apiProvider"),
-        apiKey: this.userSettings.getSetting("apiKey")
+        apiKey: this.userSettings.getSetting("apiKey"),
       };
       this.api = new APIManager(apiConfig, () => this.userSettings.settings);
+      this.ocr = new OCRManager(this);
       this.ui = new UIManager(this);
       this.cache = new TranslationCache(
         this.userSettings.settings.cacheOptions.text.maxSize,
-        this.userSettings.settings.cacheOptions.text.expirationTime
+        this.userSettings.settings.cacheOptions.text.expirationTime,
       );
       this.page = new PageTranslator(this);
       this.ui.setupEventListeners();
+      this.cache.optimizeStorage();
+      this.autoCorrectEnabled = true;
     }
+
     async translate(
       text,
       targetElement,
       isAdvanced = false,
-      displaySimple = false
+      displaySimple = false,
     ) {
-      if (!text) return;
+      if (!text) return null;
+
       try {
         const prompt = this.createPrompt(text, isAdvanced);
         let translatedText;
+
         const cacheEnabled =
           this.userSettings.settings.cacheOptions.text.enabled;
         if (cacheEnabled) {
           translatedText = this.cache.get(text, isAdvanced);
         }
+
         if (!translatedText) {
           translatedText = await this.api.request(prompt);
           if (cacheEnabled && translatedText) {
             this.cache.set(text, translatedText, isAdvanced);
           }
         }
-        if (translatedText) {
+
+        // Nếu có targetElement và không phải là dịch PDF, hiển thị kết quả
+        if (
+          translatedText &&
+          targetElement &&
+          !targetElement.isPDFTranslation
+        ) {
           if (isAdvanced || displaySimple) {
             this.ui.displayPopup(translatedText, text);
           } else {
             this.ui.showTranslationBelow(targetElement, translatedText);
           }
         }
+
+        return translatedText; // Trả về kết quả dịch
       } catch (error) {
         console.error("Translation error:", error);
-        this.handleError(error, targetElement);
+        if (targetElement && !targetElement.isPDFTranslation) {
+          this.handleError(error, targetElement);
+        }
+        throw error;
+      }
+    }
+    async translateLongText(text, maxChunkSize = 1000) {
+      const chunks = this.splitIntoChunks(text, maxChunkSize);
+      const translations = await Promise.all(
+        chunks.map((chunk) => this.translate(chunk)),
+      );
+      return this.smartMerge(translations);
+    }
+
+    splitIntoChunks(text, maxChunkSize) {
+      const sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+      const chunks = [];
+      let currentChunk = "";
+
+      for (const sentence of sentences) {
+        if ((currentChunk + sentence).length > maxChunkSize && currentChunk) {
+          chunks.push(currentChunk.trim());
+          currentChunk = "";
+        }
+        currentChunk += sentence + " ";
+      }
+
+      if (currentChunk) {
+        chunks.push(currentChunk.trim());
+      }
+
+      return chunks;
+    }
+
+    smartMerge(translations) {
+      return translations.reduce((merged, current, index) => {
+        if (index === 0) return current;
+
+        const lastChar = merged.slice(-1);
+        const firstChar = current.charAt(0);
+
+        if (".!?".includes(lastChar)) {
+          return `${merged} ${current}`;
+        }
+
+        return merged + current;
+      }, "");
+    }
+
+    async autoCorrect(translation) {
+      const prompt = `Please check and correct any grammar or context issues in this Vietnamese translation: "${translation}"`;
+
+      try {
+        const corrected = await this.api.request(prompt);
+        return corrected.trim();
+      } catch (error) {
+        console.error("Auto-correction failed:", error);
+        return translation;
       }
     }
     createPrompt(text, isAdvanced) {
